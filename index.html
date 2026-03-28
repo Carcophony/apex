@@ -352,6 +352,7 @@ html, body {
       <div id="race-name">British Grand Prix</div>
       <div id="race-venue"><span id="venue-name">Silverstone</span> · <span id="lap-of">Lap 1 of 10</span></div>
     </div>
+    <button onclick="window.location.href='/apex/apex-profile.html'" style="background:none;border:1px solid #2a2d34;border-radius:6px;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px 10px;cursor:pointer;">Profile</button>
   </div>
 
   <div id="lap-bar">
@@ -474,9 +475,9 @@ html, body {
       </div>
       <div id="earned-card-wrap" style="display:none;"></div>
       <div id="lb-list"></div>
-      <div class="btn-row" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="btn-row" style="grid-template-columns:1fr;gap:8px;">
         <button class="screen-btn" onclick="copyShare()">Copy &amp; Share</button>
-        <button class="screen-btn dark" onclick="goProfile()">My Profile</button>
+        <button class="screen-btn dark" onclick="goProfile()">My Profile →</button>
         <button class="screen-btn dark" onclick="closeResults()">Close</button>
       </div>
     </div>
