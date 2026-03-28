@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX — Driver Profile</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080909;
+  --bg2: #0e0f11;
+  --bg3: #13151a;
+  --bg4: #1a1c21;
+  --border: #222529;
+  --border2: rgba(245,200,66,0.15);
+  --gold: #f5c842;
+  --gold2: #c9a84c;
+  --gold3: #8a6d1e;
+  --red: #e8132a;
+  --green: #22c55e;
+  --white: #ffffff;
+  --ink: rgba(255,255,255,0.5);
+  --ink2: rgba(255,255,255,0.25);
+}
+
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--white);
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── CARBON TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    repeating-linear-gradient(45deg,  rgba(255,255,255,0.012) 0, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 10px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.012) 0, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 10px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── HEADER ── */
+.site-header {
+  position: relative; z-index: 10;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+}
+.site-header::after {
+  content: '';
+  position: absolute;
+  bottom: -3px; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--red), #ff3d55, var(--red));
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: var(--white);
+}
+.logo em { color: var(--red); font-style: normal; }
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.handle-pill {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+}
+.race-btn {
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.race-btn:hover { background: #ff1f38; }
+.race-btn:active { transform: scale(0.97); }
+
+/* ── GRANDSTAND ── */
+.grandstand {
+  height: 32px;
+  background: var(--bg2);
+  display: flex;
+  align-items: flex-end;
+  padding: 0 4px 3px;
+  gap: 2px;
+  overflow: hidden;
+  position: relative; z-index: 5;
+}
+.gs-block { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.gs-row { display: flex; gap: 1px; height: 6px; }
+.gs-seat { flex: 1; border-radius: 1px; }
+
+/* ── HERO STRIP ── */
+.hero {
+  position: relative; z-index: 5;
+  background: linear-gradient(160deg, #141618 0%, #0c0d0f 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 32px 24px 28px;
+  display: flex;
+  align-items: flex-end;
+  gap: 32px;
+  overflow: hidden;
+}
+
+/* Big background handle watermark */
+.hero::before {
+  content: attr(data-handle);
+  position: absolute;
+  right: -20px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 120px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: rgba(255,255,255,0.03);
+  white-space: nowrap;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.hero-left { flex: 1; }
+
+.driver-number {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.driver-handle {
+  font-size: 52px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: var(--white);
+  text-shadow: 0 2px 30px rgba(0,0,0,0.8);
+}
+
+.driver-meta {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.meta-item {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.meta-sep { color: var(--border); font-size: 14px; }
+
+/* Hero stats */
+.hero-stats {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.hero-stat {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 18px;
+  text-align: center;
+  min-width: 80px;
+}
+.hero-stat-n {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--white);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.hero-stat-n.gold { color: var(--gold); }
+.hero-stat-n.red { color: var(--red); }
+.hero-stat-l {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink2);
+  margin-top: 4px;
+}
+
+/* ── MAIN LAYOUT ── */
+.main {
+  position: relative; z-index: 5;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+}
+
+@media (max-width: 700px) {
+  .main { grid-template-columns: 1fr; }
+  .driver-handle { font-size: 36px; }
+  .hero { flex-direction: column; gap: 20px; }
+  .hero-stats { flex-wrap: wrap; }
+}
+
+/* ── SECTION HEADERS ── */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.section-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border2), transparent);
+}
+
+/* ── CARD GARAGE ── */
+.garage { margin-bottom: 28px; }
+
+.garage-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 500px) {
+  .garage-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Individual card slot */
+.card-slot {
+  aspect-ratio: 2/3;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.card-slot:hover { transform: translateY(-3px); }
+
+/* Earned card */
+.card-slot.earned {
+  border-color: var(--gold3);
+  box-shadow: 0 0 0 1px rgba(245,200,66,0.1), 0 8px 32px rgba(0,0,0,0.6);
+}
+.card-slot.earned:hover { border-color: var(--gold); }
+
+/* Locked slot */
+.card-slot.locked {
+  opacity: 0.4;
+  cursor: default;
+}
+.card-slot.locked:hover { transform: none; }
+
+.card-slot-bg {
+  position: absolute; inset: 0;
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 8px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 8px),
+    linear-gradient(160deg, #181a1e, #0c0d0f);
+}
+
+/* Gold border on earned */
+.card-slot.earned .card-slot-bg {
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 8px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.02) 0, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 8px),
+    linear-gradient(160deg, #1e1c14, #0e0d09);
+}
+
+.card-slot-stripe {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--red);
+  z-index: 2;
+}
+.card-slot.earned .card-slot-stripe {
+  background: linear-gradient(90deg, var(--gold3), var(--gold), var(--gold3));
+}
+
+.card-slot-content {
+  position: relative; z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  gap: 6px;
+}
+
+.card-type-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.card-type-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink2);
+  text-align: center;
+}
+.card-slot.earned .card-type-label { color: var(--gold2); }
+
+.card-event-name {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+
+.card-time-small {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+}
+
+.card-checker-small {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--gold3) 0, var(--gold3) 6px, transparent 6px, transparent 12px);
+  opacity: 0.6;
+}
+
+/* Lock icon */
+.lock-icon {
+  font-size: 22px;
+  opacity: 0.3;
+}
+.lock-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--ink2);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* ── RACE HISTORY ── */
+.history { margin-bottom: 0; }
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.history-table th {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink2);
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.history-table td {
+  padding: 10px 10px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(34,37,41,0.5);
+  vertical-align: middle;
+}
+.history-table tr:last-child td { border-bottom: none; }
+.history-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.pos-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 900;
+  background: var(--bg4);
+  color: var(--ink);
+}
+.pos-badge.p1 { background: linear-gradient(135deg, #f5c842, #c9a84c); color: #000; }
+.pos-badge.p2 { background: #888; color: #fff; }
+.pos-badge.p3 { background: #cd7f32; color: #fff; }
+
+.race-name-cell { font-size: 12px; font-weight: 700; color: var(--white); letter-spacing: 0.04em; }
+.race-date-cell { font-size: 10px; color: var(--ink2); margin-top: 2px; letter-spacing: 0.04em; }
+.time-cell { font-size: 14px; font-weight: 900; color: var(--gold); letter-spacing: 0.04em; }
+.pb-badge { display:inline-block; background: rgba(34,197,94,0.15); color: var(--green); font-size: 8px; font-weight: 700; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 3px; margin-left: 6px; vertical-align: middle; }
+
+/* ── SIDEBAR ── */
+.sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+/* Next race card */
+.next-race {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.next-race-header {
+  background: var(--red);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.next-race-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.8);
+}
+.next-race-body { padding: 16px; }
+.next-race-name {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.next-race-venue {
+  font-size: 10px;
+  color: var(--ink);
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+.next-race-btn {
+  width: 100%;
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.next-race-btn:hover { background: #ff1f38; }
+.next-race-btn.locked-btn {
+  background: var(--bg4);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  cursor: default;
+}
+
+/* Season standings */
+.standings-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.standings-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.standings-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.standings-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(34,37,41,0.4);
+  transition: background 0.1s;
+}
+.standings-row:last-child { border-bottom: none; }
+.standings-row:hover { background: rgba(255,255,255,0.02); }
+.standings-row.you { background: rgba(245,200,66,0.04); border-left: 2px solid var(--gold2); }
+.s-pos { font-size: 14px; font-weight: 900; color: var(--ink2); width: 20px; }
+.s-pos.gold { color: var(--gold); }
+.s-handle { flex: 1; font-size: 12px; font-weight: 700; color: var(--white); letter-spacing: 0.04em; }
+.s-pts { font-size: 13px; font-weight: 900; color: var(--white); }
+.you-marker { font-size: 8px; color: var(--gold2); font-weight: 700; letter-spacing: 0.1em; }
+
+/* ── SIGN IN SCREEN ── */
+#signin-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.signin-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 0 0 1px rgba(245,200,66,0.08), 0 32px 80px rgba(0,0,0,0.9);
+}
+.signin-header {
+  background: linear-gradient(160deg, #1a1c20, #0c0d0f);
+  padding: 36px 32px 28px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.signin-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--red), #ff3d55, var(--red));
+}
+.signin-logo {
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: var(--white);
+  margin-bottom: 6px;
+  line-height: 1;
+}
+.signin-logo em { color: var(--red); font-style: normal; }
+.signin-tagline {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+.signin-body { padding: 28px 32px 32px; }
+.signin-desc {
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  font-weight: 400;
+}
+.signin-btn {
+  width: 100%;
+  background: #000;
+  color: white;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 14px;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.15s, border-color 0.15s;
+  margin-bottom: 10px;
+}
+.signin-btn:hover { background: #111; border-color: #555; }
+.signin-btn svg { flex-shrink: 0; }
+
+.signin-note {
+  font-size: 10px;
+  color: var(--ink2);
+  text-align: center;
+  letter-spacing: 0.06em;
+  font-family: Arial, sans-serif;
+}
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--white); color: var(--bg);
+  padding: 10px 20px; border-radius: 20px;
+  font-size: 13px; font-weight: 700;
+  opacity: 0; transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none; z-index: 200; white-space: nowrap;
+  font-family: Arial, sans-serif;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- SIGN IN SCREEN -->
+<div id="signin-screen">
+  <div class="signin-card">
+    <div class="signin-header">
+      <div class="signin-logo">AP<em>EX</em></div>
+      <div class="signin-tagline">The F1 Knowledge Race</div>
+    </div>
+    <div class="signin-body">
+      <p class="signin-desc">Sign in with X to race, collect cards and appear on the leaderboard. Your handle is your driver name.</p>
+      <button class="signin-btn" onclick="signInWithX()">
+        <!-- X logo SVG -->
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        Sign in with X
+      </button>
+      <p class="signin-note">We only use your public handle. Nothing is posted without your action.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN PROFILE PAGE (hidden until signed in) -->
+<div id="profile-page" style="display:none;">
+
+  <header class="site-header">
+    <div class="logo">AP<em>EX</em></div>
+    <div class="header-right">
+      <div class="handle-pill" id="header-handle">@only9built</div>
+      <button class="race-btn" onclick="goRace()">Race Now →</button>
+    </div>
+  </header>
+
+  <div class="grandstand" id="grandstand"></div>
+
+  <div class="hero" id="hero-strip" data-handle="@only9built">
+    <div class="hero-left">
+      <div class="driver-number">Driver Profile · Season 2026</div>
+      <div class="driver-handle" id="hero-handle">@only9built</div>
+      <div class="driver-meta">
+        <span class="meta-item" id="meta-races">0 Races</span>
+        <span class="meta-sep">·</span>
+        <span class="meta-item" id="meta-best">No best time yet</span>
+        <span class="meta-sep">·</span>
+        <span class="meta-item" id="meta-cards">0 Cards</span>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-n gold" id="stat-wins">0</div>
+        <div class="hero-stat-l">Race Wins</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-n" id="stat-podiums">0</div>
+        <div class="hero-stat-l">Podiums</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-n" id="stat-best-time">—</div>
+        <div class="hero-stat-l">Best Time</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-n red" id="stat-position">P—</div>
+        <div class="hero-stat-l">Season Rank</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- LEFT COLUMN -->
+    <div class="left-col">
+
+      <!-- CARD GARAGE -->
+      <div class="garage">
+        <div class="section-head">
+          <div class="section-title">Card Garage</div>
+          <div class="section-rule"></div>
+        </div>
+        <div class="garage-grid" id="garage-grid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- RACE HISTORY -->
+      <div class="history">
+        <div class="section-head">
+          <div class="section-title">Race History</div>
+          <div class="section-rule"></div>
+        </div>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Pos</th>
+              <th>Race</th>
+              <th>Time</th>
+              <th>Correct</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- NEXT RACE -->
+      <div class="next-race">
+        <div class="next-race-header">
+          <span class="next-race-label">Next Race</span>
+          <span style="font-size:9px;color:rgba(255,255,255,0.5);font-weight:700;letter-spacing:0.1em;">Round 1 of 12</span>
+        </div>
+        <div class="next-race-body">
+          <div class="next-race-name">British Grand Prix</div>
+          <div class="next-race-venue">Silverstone · Season Opener</div>
+          <button class="next-race-btn" id="race-access-btn" onclick="goRace()">Enter Race →</button>
+        </div>
+      </div>
+
+      <!-- SEASON STANDINGS -->
+      <div class="standings-box">
+        <div class="standings-header">
+          <span class="standings-title">Season Standings</span>
+          <span style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:700;letter-spacing:0.08em;">2026 · S1</span>
+        </div>
+        <div id="standings-list">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://eluwjbndjlscixjytrzx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_xOJRXt2dGCXovTNgDOSOJw_Shrbofuw';
+const RACE_NAME = 'British Grand Prix';
+
+// ── STATE ───────────────────────────────────────────────────────────────
+let currentHandle = null;
+
+// ── SIGN IN ─────────────────────────────────────────────────────────────
+// For now: demo sign-in with stored handle
+// X OAuth will replace this — same function, different internals
+function signInWithX() {
+  // Check if we have a stored handle
+  const stored = localStorage.getItem('apex_handle');
+  if (stored) {
+    loadProfile(stored);
+    return;
+  }
+  // Prompt for handle (temporary until X OAuth is wired)
+  const h = prompt('Enter your X handle to continue (@ included):');
+  if (!h) return;
+  const handle = h.startsWith('@') ? h : '@' + h;
+  localStorage.setItem('apex_handle', handle);
+  loadProfile(handle);
+}
+
+// ── LOAD PROFILE ─────────────────────────────────────────────────────────
+async function loadProfile(handle) {
+  currentHandle = handle;
+  document.getElementById('signin-screen').style.display = 'none';
+  document.getElementById('profile-page').style.display = 'block';
+
+  // Set handle displays
+  document.getElementById('header-handle').textContent = handle;
+  document.getElementById('hero-handle').textContent = handle;
+  document.getElementById('hero-strip').setAttribute('data-handle', handle);
+
+  buildGrandstand();
+  buildGarage([]);
+  await Promise.all([loadRaceHistory(handle), loadStandings()]);
+}
+
+// ── RACE HISTORY FROM SUPABASE ─────────────────────────────────────────
+async function loadRaceHistory(handle) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_scores?handle=eq.${encodeURIComponent(handle)}&order=created_at.desc&limit=20`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
+    );
+    const rows = await res.json();
+    renderHistory(rows, handle);
+    renderHeroStats(rows);
+    buildGarage(rows);
+  } catch(e) {
+    renderHistory([], handle);
+  }
+}
+
+function renderHeroStats(rows) {
+  const races = rows.length;
+  const wins = rows.filter(r => r.position === 1).length;
+  const podiums = rows.filter(r => r.position <= 3).length;
+  const best = rows.length ? Math.min(...rows.map(r => r.total_time)) : null;
+
+  document.getElementById('meta-races').textContent = races + ' Race' + (races !== 1 ? 's' : '');
+  document.getElementById('meta-best').textContent = best ? 'PB ' + formatTime(best) : 'No best time yet';
+  document.getElementById('meta-cards').textContent = rows.length + ' Card' + (rows.length !== 1 ? 's' : '');
+  document.getElementById('stat-wins').textContent = wins;
+  document.getElementById('stat-podiums').textContent = podiums;
+  document.getElementById('stat-best-time').textContent = best ? formatTime(best) : '—';
+}
+
+function renderHistory(rows, handle) {
+  const tbody = document.getElementById('history-body');
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,0.2);padding:28px;font-family:Arial,sans-serif;font-size:13px;font-weight:400;">No races yet. Get on the grid.</td></tr>`;
+    return;
+  }
+
+  // Sort by time to find best
+  const bestTime = Math.min(...rows.map(r => r.total_time));
+
+  tbody.innerHTML = rows.map((r, i) => {
+    const isPB = r.total_time === bestTime && i === rows.findIndex(x => x.total_time === bestTime);
+    const posClass = r.position === 1 ? 'p1' : r.position === 2 ? 'p2' : r.position === 3 ? 'p3' : '';
+    const posText = r.position ? 'P' + r.position : 'P—';
+    return `
+      <tr>
+        <td><span class="pos-badge ${posClass}">${r.position || '—'}</span></td>
+        <td>
+          <div class="race-name-cell">${r.race || RACE_NAME}</div>
+          <div class="race-date-cell">${r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : ''}</div>
+        </td>
+        <td><span class="time-cell">${formatTime(r.total_time)}</span>${isPB ? '<span class="pb-badge">PB</span>' : ''}</td>
+        <td style="color:rgba(255,255,255,0.5);font-size:12px;">${r.correct !== undefined ? r.correct + '/25' : '—'}</td>
+      </tr>`;
+  }).join('');
+}
+
+// ── STANDINGS FROM SUPABASE ────────────────────────────────────────────
+async function loadStandings() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_scores?race=eq.${encodeURIComponent(RACE_NAME)}&order=total_time.asc&limit=200`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
+    );
+    const all = await res.json();
+    // Best per handle
+    const best = {};
+    all.forEach(r => { if (!best[r.handle] || r.total_time < best[r.handle]) best[r.handle] = r.total_time; });
+    const sorted = Object.entries(best).sort((a,b) => a[1]-b[1]).slice(0,10);
+    renderStandings(sorted);
+  } catch(e) { renderStandings([]); }
+}
+
+function renderStandings(sorted) {
+  const el = document.getElementById('standings-list');
+  if (!sorted.length) {
+    el.innerHTML = `<div style="padding:20px;text-align:center;color:rgba(255,255,255,0.2);font-family:Arial,sans-serif;font-size:12px;">No times recorded yet.</div>`;
+    return;
+  }
+  el.innerHTML = sorted.map(([handle, time], i) => {
+    const pos = i + 1;
+    const isYou = handle === currentHandle;
+    return `<div class="standings-row ${isYou ? 'you' : ''}">
+      <div class="s-pos ${pos === 1 ? 'gold' : ''}">${pos}</div>
+      <div class="s-handle">${handle}${isYou ? ' <span class="you-marker">YOU</span>' : ''}</div>
+      <div class="s-pts">${formatTime(time)}</div>
+    </div>`;
+  }).join('');
+
+  // Set season rank
+  const myPos = sorted.findIndex(([h]) => h === currentHandle) + 1;
+  document.getElementById('stat-position').textContent = myPos > 0 ? 'P' + myPos : 'P—';
+}
+
+// ── CARD GARAGE ────────────────────────────────────────────────────────
+function buildGarage(rows) {
+  const grid = document.getElementById('garage-grid');
+  const hasRaced = rows.length > 0;
+  const hasWon = rows.some(r => r.position === 1);
+
+  // Card definitions — earned state based on race history
+  const cards = [
+    { type: 'Participation', icon: '🏁', label: 'Participation', earned: hasRaced, event: hasRaced ? rows[0].race || RACE_NAME : null, time: hasRaced ? formatTime(Math.min(...rows.map(r=>r.total_time))) : null },
+    { type: 'Winner', icon: '🏆', label: 'Race Winner', earned: hasWon, event: hasWon ? RACE_NAME : null, time: hasWon ? formatTime(Math.min(...rows.filter(r=>r.position===1).map(r=>r.total_time))) : null },
+    { type: 'Podium', icon: '🥈', label: 'Podium Finish', earned: rows.some(r=>r.position<=3 && r.position!==1), event: null, time: null },
+    { type: 'locked', icon: null, label: 'Qualifying', earned: false, locked: true },
+    { type: 'locked', icon: null, label: 'Race Entry', earned: false, locked: true },
+    { type: 'locked', icon: null, label: 'Championship', earned: false, locked: true },
+  ];
+
+  grid.innerHTML = cards.map(c => {
+    if (c.locked || (!c.earned)) {
+      return `<div class="card-slot ${c.earned ? '' : 'locked'}">
+        <div class="card-slot-bg"></div>
+        <div class="card-slot-stripe"></div>
+        <div class="card-slot-content">
+          <div class="lock-icon">🔒</div>
+          <div class="lock-label">${c.label}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="card-slot earned" onclick="showCard('${c.type}')">
+      <div class="card-slot-bg"></div>
+      <div class="card-slot-stripe"></div>
+      <div class="card-slot-content">
+        <div class="card-type-icon">${c.icon}</div>
+        <div class="card-type-label">${c.label}</div>
+        ${c.event ? `<div class="card-event-name">${c.event}</div>` : ''}
+        ${c.time ? `<div class="card-time-small">${c.time}</div>` : ''}
+      </div>
+      <div class="card-checker-small"></div>
+    </div>`;
+  }).join('');
+}
+
+function showCard(type) {
+  showToast('Full card view coming soon — ' + type + ' card earned!');
+}
+
+// ── GRANDSTAND ────────────────────────────────────────────────────────
+function buildGrandstand() {
+  const gs = document.getElementById('grandstand');
+  gs.innerHTML = '';
+  const cols = ['#e8132a','#f5c842','#3b82f6','#22c55e','#e8132a','#888','#f5c842','#3b82f6','#22c55e','#e8132a','#f5c842','#3b82f6'];
+  for (let i = 0; i < 12; i++) {
+    const block = document.createElement('div');
+    block.className = 'gs-block';
+    for (let r = 0; r < 2; r++) {
+      const row = document.createElement('div');
+      row.className = 'gs-row';
+      for (let s = 0; s < 4; s++) {
+        const seat = document.createElement('div');
+        seat.className = 'gs-seat';
+        seat.style.background = Math.random() > 0.12 ? cols[i] : '#1e2128';
+        seat.style.opacity = (0.5 + Math.random() * 0.5).toFixed(2);
+        row.appendChild(seat);
+      }
+      block.appendChild(row);
+    }
+    gs.appendChild(block);
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────
+function formatTime(secs) {
+  if (!secs) return '—';
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return String(m).padStart(2,'0') + ':' + s.toFixed(1).padStart(4,'0');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function goRace() {
+  window.location.href = 'apex-gp.html';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+// Auto-load if handle already stored
+const savedHandle = localStorage.getItem('apex_handle');
+if (savedHandle) {
+  loadProfile(savedHandle);
+}
+</script>
+</body>
+</html>
