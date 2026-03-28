@@ -472,6 +472,7 @@ html, body {
         <span id="sp-emoji"></span>
         <div id="sp-text"></div>
       </div>
+      <div id="earned-card-wrap" style="display:none;"></div>
       <div id="lb-list"></div>
       <div class="btn-row">
         <button class="screen-btn" onclick="copyShare()">Copy &amp; Share</button>
@@ -1122,7 +1123,7 @@ async function finishRace() {
       previousBest = pbData[0].total_time;
       isNewPB = totalTime < previousBest;
     } else {
-      isNewPB = true; // First ever time = automatically a PB
+      isNewPB = true;
     }
   } catch(e) { isNewPB = false; }
 
@@ -1130,15 +1131,77 @@ async function finishRace() {
   window._previousBest = previousBest;
 
   await saveScore();
+
+  // Get position for card issuance
+  const lb = await fetchLeaderboard();
+  window._cachedLb = lb;
+  const myPos = lb.findIndex(r => r.handle === handle) + 1;
+  window._myPos = myPos;
+
+  await issueCard(myPos);
   showResults();
+}
+
+// ── CARD ISSUANCE ─────────────────────────────────────────────────────────────
+async function issueCard(position) {
+  try {
+    // Decide card type
+    let cardType;
+    if (position === 1) cardType = 'Winner';
+    else if (position <= 3) cardType = 'Podium';
+    else cardType = 'Participation';
+
+    // Check if player already has this card type for this race
+    const check = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_cards?handle=eq.${encodeURIComponent(handle)}&race=eq.${encodeURIComponent(RACE_NAME)}&card_type=eq.${encodeURIComponent(cardType)}`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }}
+    );
+    const existing = await check.json();
+
+    // Only issue if they don't already have this card type for this race
+    // Exception: Winner card always re-issues if they beat their own time
+    if (existing.length > 0 && cardType !== 'Winner') return;
+
+    // Generate serial number — APEX·BGP·S1·2026·001 format
+    const raceCode = RACE_NAME.split(' ').map(w => w[0]).join('').toUpperCase();
+    const dateCode = new Date().getFullYear();
+    const serial = `APEX·${raceCode}·S1·${dateCode}·${String(position).padStart(3,'0')}`;
+
+    // Save card to Supabase
+    await fetch(`${SUPABASE_URL}/rest/v1/apex_cards`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        handle,
+        card_type: cardType,
+        race: RACE_NAME,
+        season: '2026 · S1',
+        time: Math.round(totalTime * 10) / 10,
+        position,
+        correct: totalCorrect,
+        serial
+      })
+    });
+
+    // Store for display on results screen
+    window._earnedCard = { cardType, serial, position };
+
+  } catch(e) {
+    window._earnedCard = null;
+  }
 }
 
 // ── RESULTS ───────────────────────────────────────────────────────────────────
 async function showResults() {
   if (!gameComplete) return;
 
-  const lb = await fetchLeaderboard();
-  const myPos = lb.findIndex(r => r.handle === handle) + 1;
+  const lb = window._cachedLb || await fetchLeaderboard();
+  const myPos = window._myPos || (lb.findIndex(r => r.handle === handle) + 1);
   const posLabel = myPos > 0 ? 'P' + myPos : 'P—';
 
   const isNewPB = window._isNewPB || false;
@@ -1182,6 +1245,27 @@ async function showResults() {
   document.getElementById('sp-emoji').textContent = emojiStr;
   document.getElementById('sp-text').textContent = `${posLabel} · ${formatTime(totalTime)}${pbLine}\n${totalCorrect}/${TOTAL_LAPS*QUESTIONS_PER_LAP} correct`;
   document.getElementById('res-header').dataset.share = shareText;
+
+  // ── EARNED CARD DISPLAY ──
+  const earned = window._earnedCard;
+  const cardEl = document.getElementById('earned-card-wrap');
+  if (earned && cardEl) {
+    const icons = { Winner:'🏆', Podium:'🥈', Participation:'🏁' };
+    const colors = { Winner:'#c9a84c', Podium:'#888', Participation:'#e8132a' };
+    cardEl.innerHTML = `
+      <div style="background:rgba(0,0,0,0.4);border:1px solid ${colors[earned.cardType]};border-radius:8px;padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:28px;line-height:1;">${icons[earned.cardType]}</div>
+        <div style="flex:1;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${colors[earned.cardType]};margin-bottom:3px;">Card Earned</div>
+          <div style="font-size:16px;font-weight:900;color:#fff;letter-spacing:0.06em;">${earned.cardType} Card</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;margin-top:2px;">${earned.serial}</div>
+        </div>
+        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:0.1em;text-transform:uppercase;">Saved →</div>
+      </div>`;
+    cardEl.style.display = 'block';
+  } else if (cardEl) {
+    cardEl.style.display = 'none';
+  }
 
   // Leaderboard
   const lbEl = document.getElementById('lb-list');
