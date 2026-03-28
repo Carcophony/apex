@@ -474,8 +474,9 @@ html, body {
       </div>
       <div id="earned-card-wrap" style="display:none;"></div>
       <div id="lb-list"></div>
-      <div class="btn-row">
+      <div class="btn-row" style="grid-template-columns:1fr 1fr 1fr;">
         <button class="screen-btn" onclick="copyShare()">Copy &amp; Share</button>
+        <button class="screen-btn dark" onclick="goProfile()">My Profile</button>
         <button class="screen-btn dark" onclick="closeResults()">Close</button>
       </div>
     </div>
@@ -1293,6 +1294,8 @@ async function showResults() {
 }
 
 function closeResults() { document.getElementById('results-screen').classList.remove('show'); }
+
+function goProfile() { window.location.href = '/apex/apex-profile.html'; }
 
 function copyShare() {
   const text = document.getElementById('res-header').dataset.share;
