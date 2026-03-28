@@ -816,28 +816,37 @@ async function loadProfile(handle) {
 // ── RACE HISTORY FROM SUPABASE ─────────────────────────────────────────
 async function loadRaceHistory(handle) {
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/apex_scores?handle=eq.${encodeURIComponent(handle)}&order=created_at.desc&limit=20`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
-    );
-    const rows = await res.json();
+    const [scoresRes, cardsRes] = await Promise.all([
+      fetch(
+        `${SUPABASE_URL}/rest/v1/apex_scores?handle=eq.${encodeURIComponent(handle)}&order=created_at.desc&limit=20`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
+      ),
+      fetch(
+        `${SUPABASE_URL}/rest/v1/apex_cards?handle=eq.${encodeURIComponent(handle)}&order=created_at.desc`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
+      )
+    ]);
+    const rows = await scoresRes.json();
+    const cards = await cardsRes.json();
     renderHistory(rows, handle);
-    renderHeroStats(rows);
-    buildGarage(rows);
+    renderHeroStats(rows, cards);
+    buildGarage(cards);
   } catch(e) {
     renderHistory([], handle);
+    buildGarage([]);
   }
 }
 
-function renderHeroStats(rows) {
+function renderHeroStats(rows, cards) {
   const races = rows.length;
-  const wins = rows.filter(r => r.position === 1).length;
-  const podiums = rows.filter(r => r.position <= 3).length;
+  const wins = cards.filter(c => c.card_type === 'Winner').length;
+  const podiums = cards.filter(c => c.card_type === 'Podium' || c.card_type === 'Winner').length;
   const best = rows.length ? Math.min(...rows.map(r => r.total_time)) : null;
+  const cardCount = cards.length;
 
   document.getElementById('meta-races').textContent = races + ' Race' + (races !== 1 ? 's' : '');
   document.getElementById('meta-best').textContent = best ? 'PB ' + formatTime(best) : 'No best time yet';
-  document.getElementById('meta-cards').textContent = rows.length + ' Card' + (rows.length !== 1 ? 's' : '');
+  document.getElementById('meta-cards').textContent = cardCount + ' Card' + (cardCount !== 1 ? 's' : '');
   document.getElementById('stat-wins').textContent = wins;
   document.getElementById('stat-podiums').textContent = podiums;
   document.getElementById('stat-best-time').textContent = best ? formatTime(best) : '—';
@@ -907,49 +916,77 @@ function renderStandings(sorted) {
   document.getElementById('stat-position').textContent = myPos > 0 ? 'P' + myPos : 'P—';
 }
 
-// ── CARD GARAGE ────────────────────────────────────────────────────────
-function buildGarage(rows) {
+// ── CARD GARAGE — driven by apex_cards table ───────────────────────────
+function buildGarage(cards) {
   const grid = document.getElementById('garage-grid');
-  const hasRaced = rows.length > 0;
-  const hasWon = rows.some(r => r.position === 1);
 
-  // Card definitions — earned state based on race history
-  const cards = [
-    { type: 'Participation', icon: '🏁', label: 'Participation', earned: hasRaced, event: hasRaced ? rows[0].race || RACE_NAME : null, time: hasRaced ? formatTime(Math.min(...rows.map(r=>r.total_time))) : null },
-    { type: 'Winner', icon: '🏆', label: 'Race Winner', earned: hasWon, event: hasWon ? RACE_NAME : null, time: hasWon ? formatTime(Math.min(...rows.filter(r=>r.position===1).map(r=>r.total_time))) : null },
-    { type: 'Podium', icon: '🥈', label: 'Podium Finish', earned: rows.some(r=>r.position<=3 && r.position!==1), event: null, time: null },
-    { type: 'locked', icon: null, label: 'Qualifying', earned: false, locked: true },
-    { type: 'locked', icon: null, label: 'Race Entry', earned: false, locked: true },
-    { type: 'locked', icon: null, label: 'Championship', earned: false, locked: true },
-  ];
+  const icons    = { Winner:'🏆', Podium:'🥈', Participation:'🏁' };
+  const colors   = { Winner:'#c9a84c', Podium:'#888', Participation:'#e8132a' };
+  const labels   = { Winner:'Race Winner', Podium:'Podium Finish', Participation:'Participation' };
 
-  grid.innerHTML = cards.map(c => {
-    if (c.locked || (!c.earned)) {
-      return `<div class="card-slot ${c.earned ? '' : 'locked'}">
+  // Earned card slots — one per unique card_type+race combo
+  const earnedSlots = cards.map(c => ({
+    type: c.card_type,
+    icon: icons[c.card_type] || '🏁',
+    label: labels[c.card_type] || c.card_type,
+    color: colors[c.card_type] || '#e8132a',
+    event: c.race,
+    time: c.time ? formatTime(c.time) : null,
+    serial: c.serial,
+    earned: true
+  }));
+
+  // Always show locked slots for cards not yet earned
+  const hasWinner = cards.some(c => c.card_type === 'Winner');
+  const hasPodium = cards.some(c => c.card_type === 'Podium');
+  const hasParticipation = cards.some(c => c.card_type === 'Participation');
+
+  const lockedSlots = [
+    !hasParticipation && { label:'Participation', hint:'Complete a race' },
+    !hasPodium        && { label:'Podium Finish',  hint:'Finish P1–P3' },
+    !hasWinner        && { label:'Race Winner',    hint:'Finish P1' },
+    { label:'Qualifying',    hint:'Coming soon', locked:true },
+    { label:'Race Entry',    hint:'Coming soon', locked:true },
+    { label:'Championship',  hint:'Coming soon', locked:true },
+  ].filter(Boolean);
+
+  const allSlots = [...earnedSlots, ...lockedSlots];
+
+  grid.innerHTML = allSlots.map(c => {
+    if (!c.earned) {
+      return `<div class="card-slot locked" title="${c.hint || ''}">
         <div class="card-slot-bg"></div>
         <div class="card-slot-stripe"></div>
         <div class="card-slot-content">
           <div class="lock-icon">🔒</div>
           <div class="lock-label">${c.label}</div>
+          ${c.hint ? `<div style="font-size:8px;color:rgba(255,255,255,0.2);letter-spacing:0.08em;margin-top:4px;text-align:center;">${c.hint}</div>` : ''}
         </div>
       </div>`;
     }
-    return `<div class="card-slot earned" onclick="showCard('${c.type}')">
+    return `<div class="card-slot earned" onclick="showCard('${c.type}','${c.serial||''}','${c.event||''}','${c.time||''}')">
       <div class="card-slot-bg"></div>
-      <div class="card-slot-stripe"></div>
+      <div class="card-slot-stripe" style="background:${c.color};"></div>
       <div class="card-slot-content">
         <div class="card-type-icon">${c.icon}</div>
-        <div class="card-type-label">${c.label}</div>
+        <div class="card-type-label" style="color:${c.color};">${c.label}</div>
         ${c.event ? `<div class="card-event-name">${c.event}</div>` : ''}
-        ${c.time ? `<div class="card-time-small">${c.time}</div>` : ''}
+        ${c.time  ? `<div class="card-time-small">${c.time}</div>` : ''}
+        ${c.serial ? `<div style="font-size:7px;color:rgba(255,255,255,0.2);margin-top:4px;letter-spacing:0.06em;">${c.serial}</div>` : ''}
       </div>
       <div class="card-checker-small"></div>
     </div>`;
   }).join('');
 }
 
-function showCard(type) {
-  showToast('Full card view coming soon — ' + type + ' card earned!');
+function showCard(type, serial, event, time) {
+  // Full card view — links to winner card page with params
+  if (type === 'Winner') {
+    const params = new URLSearchParams({ handle: currentHandle, serial, event, time });
+    window.open('apex-winner-card.html?' + params.toString(), '_blank');
+  } else {
+    showToast(type + ' card · ' + serial);
+  }
 }
 
 // ── GRANDSTAND ────────────────────────────────────────────────────────
