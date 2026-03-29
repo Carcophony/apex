@@ -492,7 +492,7 @@ html, body {
         <button class="screen-btn" onclick="copyShare()">Copy &amp; Share</button>
         <button class="screen-btn" id="champ-btn" style="display:none;background:#c9a84c;color:#000;" onclick="goChampionship()">Championship → Go Compete</button>
         <button class="screen-btn dark" onclick="goProfile()">My Profile →</button>
-        <button class="screen-btn dark" onclick="closeResults()">Close</button>
+        <button class="screen-btn dark" onclick="goProfile()">Close</button>
       </div>
     </div>
   </div>
@@ -1395,7 +1395,10 @@ function goChampionship() { window.location.href = '/apex/apex-championship.html
 function copyShare() {
   const text = document.getElementById('res-header').dataset.share;
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => { closeResults(); showToast('Copied! Ready to share.'); });
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Copied! Ready to share.');
+      setTimeout(() => { window.location.href = '/apex/apex-profile.html'; }, 1500);
+    });
   } else showToast('Copy not available in this browser');
 }
 
