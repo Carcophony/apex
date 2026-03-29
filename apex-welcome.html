@@ -409,25 +409,21 @@ body::after {
 </div>
 
 <script>
-// Show welcome screen only once per player
-// After first visit, go straight to game
 function goRace() {
   localStorage.setItem('apex_welcomed', '1');
-//   window.location.href = '/apex/index.html';
-// }
+  window.location.href = '/apex/index.html';
+}
 
 function goProfile() {
   localStorage.setItem('apex_welcomed', '1');
   window.location.href = '/apex/apex-profile.html';
-// }
+}
 
-// If returning player, redirect to game directly
-// Comment this out if you want welcome screen every time for testing
-// const welcomed = localStorage.getItem('apex_welcomed');
-// const handle   = localStorage.getItem('apex_handle');
-// if (welcomed && handle) {
-//   window.location.href = '/apex/index.html';
-// }
+// Returning player — skip welcome, go straight to profile
+const _handle = localStorage.getItem('apex_handle');
+if (_handle) {
+  window.location.href = '/apex/apex-profile.html';
+}
 </script>
 </body>
 </html>
