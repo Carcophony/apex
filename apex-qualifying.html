@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>APEX — Qualifying</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0e0f11;
+  --bg2: #13151a;
+  --bg3: #1e2128;
+  --white: #ffffff;
+  --ink3: #888;
+  --ink4: #555;
+  --border: #2a2d34;
+  --red: #e8132a;
+  --amber: #f59e0b;
+  --gold: #f5c842;
+  --green: #22c55e;
+  --blue: #3b82f6;
+}
+
+html, body {
+  min-height: 100%; width: 100%;
+  background: var(--bg);
+  font-family: 'Barlow', sans-serif;
+  color: var(--white);
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#app {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 500px) {
+  html, body { align-items: flex-start; }
+  #app { border-radius: 0; border: none; min-height: 100dvh; }
+}
+
+/* GRANDSTAND */
+#grandstand {
+  flex-shrink: 0;
+  height: 40px;
+  background: var(--bg);
+  border-bottom: 2px solid var(--red);
+  display: flex;
+  align-items: flex-end;
+  padding: 0 6px 4px;
+  gap: 3px;
+  overflow: hidden;
+}
+.gs-block { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.gs-row { display: flex; gap: 2px; height: 7px; }
+.gs-seat { flex: 1; border-radius: 1px; }
+
+/* HEADER */
+#header {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+#logo { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 900; letter-spacing: 0.1em; color: var(--white); }
+#logo span { color: var(--red); }
+#race-info { text-align: right; }
+#race-name { font-size: 11px; font-weight: 700; color: var(--red); letter-spacing: 0.08em; text-transform: uppercase; }
+#race-venue { font-size: 10px; color: var(--ink4); margin-top: 1px; }
+
+/* LAP BAR */
+#lap-bar {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 14px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+}
+#lap-label { font-size: 11px; font-weight: 700; color: var(--ink3); letter-spacing: 0.08em; text-transform: uppercase; }
+#lap-timer { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; color: var(--gold); letter-spacing: 0.04em; }
+#lap-pips { display: flex; gap: 5px; }
+.pip { width: 22px; height: 4px; border-radius: 2px; background: var(--border); transition: background 0.3s; }
+.pip.correct { background: var(--green); }
+.pip.wrong { background: var(--red); }
+.pip.active { background: var(--gold); }
+
+/* MAIN GAME AREA */
+#game-area {
+  display: flex; flex-direction: column;
+  padding: 10px 14px;
+  gap: 10px;
+}
+
+/* CATEGORY */
+#category-panel {
+  flex-shrink: 0;
+  background: var(--bg3);
+  border: 1px solid var(--red);
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+#category-panel.visible { opacity: 1; }
+#cat-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink3); margin-bottom: 3px; }
+#cat-value { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; color: var(--gold); letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* CARDS / HELMETS */
+#cards-row {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.helmet-btn {
+  background: var(--bg3);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s, opacity 0.3s;
+  padding: 16px 8px 14px;
+  opacity: 0;
+  transform: translateY(10px);
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+}
+.helmet-btn.visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.35s, transform 0.35s cubic-bezier(0.34,1.2,0.64,1), border-color 0.15s;
+}
+.helmet-btn:active { transform: scale(0.96); }
+.helmet-btn.correct { border-color: var(--green); background: rgba(34,197,94,0.08); }
+.helmet-btn.wrong { border-color: var(--red); background: rgba(232,19,42,0.08); opacity: 0.5; }
+.helmet-btn.winner { border-color: var(--green); background: rgba(34,197,94,0.08); }
+.helmet-btn:disabled { cursor: not-allowed; }
+
+.helmet-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 10px 10px 0 0;
+}
+.helmet-btn.c1::before { background: var(--red); }
+.helmet-btn.c2::before { background: var(--ink3); }
+.helmet-btn.c3::before { background: var(--gold); }
+
+/* SVG HELMET */
+.helmet-svg { width: 72px; height: 56px; }
+
+.driver-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px; font-weight: 800;
+  color: var(--white); text-align: center;
+  line-height: 1.1;
+}
+.driver-flag { font-size: 16px; }
+.driver-team { font-size: 9px; color: var(--ink4); text-align: center; margin-top: 1px; }
+
+@media (max-width: 500px) {
+  .driver-name { font-size: 19px; }
+  .driver-flag { font-size: 22px; }
+  .driver-team { font-size: 11px; }
+  .helmet-svg { width: 86px; height: 67px; }
+}
+
+/* RESULT INDICATOR */
+.result-mark {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: none; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.helmet-btn.correct .result-mark, .helmet-btn.winner .result-mark { display: flex; background: var(--green); }
+.helmet-btn.wrong .result-mark { display: flex; background: var(--red); }
+
+/* TRACK STRIP */
+#track-strip {
+  flex-shrink: 0;
+  height: 10px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+#track-line { position: absolute; top: 4px; left: 0; right: 0; height: 2px; background: var(--border); }
+#track-car {
+  position: absolute; top: 2px;
+  width: 28px; height: 6px;
+  background: var(--red); border-radius: 3px;
+  left: 5%; transition: left 1s linear;
+}
+#track-car::after {
+  content: ''; position: absolute;
+  right: -5px; top: 1px;
+  width: 7px; height: 4px;
+  background: var(--gold); border-radius: 0 3px 3px 0;
+}
+
+/* FOOTER */
+#footer {
+  flex-shrink: 0;
+  padding: 6px 14px 10px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg2);
+}
+#pos-display { }
+#pos-label { font-size: 9px; color: var(--ink3); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+#pos-value { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; color: var(--white); }
+#countdown-wrap { text-align: center; }
+#cd-label { font-size: 9px; color: var(--ink3); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+#cd-time { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--white); }
+#share-btn {
+  background: var(--red); color: white; border: none; border-radius: 6px;
+  padding: 8px 14px;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+#share-btn.visible { opacity: 1; pointer-events: all; }
+
+/* SCREENS */
+.screen {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 100;
+  display: none; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.screen.show { display: flex; }
+.screen-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 16px; width: 100%; max-width: 380px;
+  overflow: hidden;
+}
+.screen-header {
+  background: var(--red); padding: 20px; text-align: center;
+}
+.screen-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 36px; font-weight: 900; color: white; line-height: 1;
+  letter-spacing: 0.04em;
+}
+.screen-sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+.screen-body { padding: 16px; }
+.screen-input {
+  width: 100%; padding: 12px 14px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--white);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px; font-weight: 700; letter-spacing: 0.04em;
+  margin-bottom: 10px; outline: none;
+}
+.screen-input:focus { border-color: var(--red); }
+.screen-input::placeholder { color: var(--ink4); }
+.screen-btn {
+  width: 100%; padding: 14px;
+  background: var(--red); color: white; border: none;
+  border-radius: 8px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 18px; font-weight: 800; letter-spacing: 0.06em;
+  text-transform: uppercase; cursor: pointer;
+  transition: transform 0.1s;
+}
+.screen-btn:active { transform: scale(0.98); }
+.screen-btn.dark { background: var(--bg3); border: 1px solid var(--border); color: var(--white); }
+
+/* STATS GRID */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.stat-box { background: var(--bg3); border-radius: 8px; padding: 10px 6px; text-align: center; }
+.stat-n { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; color: var(--white); line-height: 1; }
+.stat-l { font-size: 9px; color: var(--ink3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+/* LAP COMPLETE SCREEN */
+#lap-complete-screen .screen-header { background: #1a6e2e; }
+
+/* LEADERBOARD */
+#lb-list { max-height: 260px; overflow-y: auto; margin-bottom: 10px; }
+.lb-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 6px;
+  margin-bottom: 4px; background: var(--bg3);
+}
+.lb-row.you { border: 1px solid var(--gold); background: rgba(245,200,66,0.06); }
+.lb-pos { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: var(--ink3); width: 24px; }
+.lb-pos.p1 { color: var(--gold); }
+.lb-pos.p2 { color: #ccc; }
+.lb-pos.p3 { color: #cd7f32; }
+.lb-handle { flex: 1; font-size: 13px; font-weight: 600; color: var(--white); }
+.lb-time { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: var(--white); }
+.lb-gap { font-size: 11px; color: var(--ink3); min-width: 50px; text-align: right; }
+
+/* BTN ROW */
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+
+/* SHARE CARD */
+#share-preview {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px; margin-bottom: 10px;
+}
+#sp-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 800; color: var(--ink3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+#sp-emoji { font-size: 20px; letter-spacing: 3px; display: block; margin-bottom: 4px; }
+#sp-text { font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.6; white-space: pre-line; }
+
+/* TOAST */
+#toast {
+  position: fixed; bottom: 70px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--white); color: var(--bg);
+  padding: 10px 20px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+  opacity: 0; transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none; z-index: 300; white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* PENALTY FLASH */
+#penalty-flash {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 48px; font-weight: 900;
+  color: var(--red); letter-spacing: 0.04em;
+  opacity: 0; pointer-events: none; z-index: 200;
+  transition: opacity 0.1s;
+}
+#penalty-flash.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div id="grandstand"></div>
+
+  <div id="header">
+    <div id="logo">AP<span>EX</span></div>
+    <div id="race-info">
+      <div id="race-name" style="color:#f59e0b;">Qualifying Session</div>
+      <div id="race-venue"><span id="venue-name">Silverstone</span> · <span id="lap-of">Lap 1 of 5</span></div>
+    </div>
+    <button onclick="window.location.href='/apex/apex-profile.html'" style="background:none;border:1px solid #2a2d34;border-radius:6px;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px 10px;cursor:pointer;">Profile</button>
+  </div>
+
+  <div id="lap-bar">
+    <div id="lap-label">LAP <span id="lap-num">1</span></div>
+    <div id="lap-timer">00:00.0</div>
+    <div id="lap-pips">
+      <div class="pip active" id="pip0"></div>
+      <div class="pip" id="pip1"></div>
+      <div class="pip" id="pip2"></div>
+      <div class="pip" id="pip3"></div>
+      <div class="pip" id="pip4"></div>
+    </div>
+  </div>
+
+  <div id="game-area">
+    <div id="category-panel">
+      <div id="cat-label">Category</div>
+      <div id="cat-value">—</div>
+    </div>
+
+    <div id="cards-row">
+      <button class="helmet-btn c1" id="card0" onclick="answer(0)" disabled>
+        <div class="result-mark" id="mark0">✓</div>
+        <svg class="helmet-svg" id="helm0" viewBox="0 0 60 46"></svg>
+        <div class="driver-flag" id="flag0"></div>
+        <div class="driver-name" id="name0">—</div>
+        <div class="driver-team" id="team0"></div>
+      </button>
+      <button class="helmet-btn c2" id="card1" onclick="answer(1)" disabled>
+        <div class="result-mark" id="mark1">✓</div>
+        <svg class="helmet-svg" id="helm1" viewBox="0 0 60 46"></svg>
+        <div class="driver-flag" id="flag1"></div>
+        <div class="driver-name" id="name1">—</div>
+        <div class="driver-team" id="team1"></div>
+      </button>
+      <button class="helmet-btn c3" id="card2" onclick="answer(2)" disabled>
+        <div class="result-mark" id="mark2">✓</div>
+        <svg class="helmet-svg" id="helm2" viewBox="0 0 60 46"></svg>
+        <div class="driver-flag" id="flag2"></div>
+        <div class="driver-name" id="name2">—</div>
+        <div class="driver-team" id="team2"></div>
+      </button>
+    </div>
+
+    <div id="track-strip">
+      <div id="track-line"></div>
+      <div id="track-car"></div>
+    </div>
+  </div>
+
+  <div id="footer">
+    <div id="pos-display">
+      <div id="pos-label">Position</div>
+      <div id="pos-value">P—</div>
+    </div>
+    <div id="countdown-wrap">
+      <div id="cd-label">Next race in</div>
+      <div id="cd-time">—</div>
+    </div>
+    <button id="share-btn" onclick="showResults()">Results</button>
+  </div>
+
+</div>
+
+<!-- HANDLE SCREEN -->
+<div class="screen show" id="handle-screen">
+  <div class="screen-card">
+    <div class="screen-header" style="background:#f59e0b;">
+      <div class="screen-title" style="color:#000;">QUALIFYING</div>
+      <div class="screen-sub" style="color:rgba(0,0,0,0.6);">Silverstone · One lap. Everyone qualifies.</div>
+    </div>
+    <div class="screen-body">
+      <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">
+        <p style="font-size:12px;color:#f59e0b;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Your Qualifying Time Sets Your Grid</p>
+        <p style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6;">One lap. Five questions. Everyone qualifies — but your time determines your advantage in the Race. Beat the par time of <strong style="color:#fff;">3:30.0</strong> and you start ahead of the field. Miss it and you carry that deficit in.</p>
+      </div>
+      <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.5;">Enter your X handle to begin. You need a Participation card to qualify.</p>
+      <input class="screen-input" id="handle-input" type="text" placeholder="@yourhandle" maxlength="30" />
+      <button class="screen-btn" style="background:#f59e0b;color:#000;" onclick="startQualifying()">Begin Qualifying</button>
+      <button class="screen-btn dark" style="margin-top:8px;" onclick="goProfile()">My Profile →</button>
+    </div>
+  </div>
+</div>
+
+<!-- LAP COMPLETE SCREEN -->
+<div class="screen" id="lap-complete-screen">
+  <div class="screen-card">
+    <div class="screen-header" id="lc-header">
+      <div class="screen-title" id="lc-title">LAP COMPLETE</div>
+      <div class="screen-sub" id="lc-sub">Lap 1 of 10</div>
+    </div>
+    <div class="screen-body">
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-n" id="lc-time">0.0s</div><div class="stat-l">Lap time</div></div>
+        <div class="stat-box"><div class="stat-n" id="lc-correct">0/5</div><div class="stat-l">Correct</div></div>
+        <div class="stat-box"><div class="stat-n" id="lc-penalty">+0s</div><div class="stat-l">Penalties</div></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-n" id="lc-total">0.0s</div><div class="stat-l">Race total</div></div>
+        <div class="stat-box"><div class="stat-n" id="lc-pos">P—</div><div class="stat-l">Position</div></div>
+        <div class="stat-box"><div class="stat-n" id="lc-laps">1/10</div><div class="stat-l">Laps done</div></div>
+      </div>
+      <button class="screen-btn" id="next-lap-btn" onclick="nextLap()">Next Lap</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div class="screen" id="results-screen">
+  <div class="screen-card">
+    <div class="screen-header" id="res-header">
+      <div class="screen-title" id="res-title">QUALIFYING COMPLETE</div>
+      <div class="screen-sub" id="res-sub">Qualifying · Silverstone</div>
+    </div>
+    <div class="screen-body">
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-n" id="res-time">0.0s</div><div class="stat-l">Total time</div></div>
+        <div class="stat-box"><div class="stat-n" id="res-pos">P1</div><div class="stat-l">Position</div></div>
+        <div class="stat-box"><div class="stat-n" id="res-correct">0/50</div><div class="stat-l">Correct</div></div>
+      </div>
+      <div id="share-preview">
+        <div id="sp-title">APEX · Practice · Silverstone</div>
+        <span id="sp-emoji"></span>
+        <div id="sp-text"></div>
+      </div>
+      <div id="earned-card-wrap" style="display:none;"></div>
+      <div id="lb-list"></div>
+      <div class="btn-row" style="grid-template-columns:1fr;gap:8px;">
+        <button class="screen-btn" onclick="copyShare()">Copy &amp; Share</button>
+        <button class="screen-btn" id="race-btn" style="display:none;background:#e8132a;color:#fff;" onclick="goRace()">Race Unlocked → Go Race</button>
+        <button class="screen-btn dark" onclick="goProfile()">My Profile →</button>
+        <button class="screen-btn dark" onclick="closeResults()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="penalty-flash">+10s</div>
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://eluwjbndjlscixjytrzx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_xOJRXt2dGCXovTNgDOSOJw_Shrbofuw';
+
+// ── QUALIFYING CONFIGURATION ─────────────────────────────────────────────────
+const RACE_NAME          = 'Qualifying · Silverstone';
+const RACE_VENUE         = 'Silverstone';
+const RACE_CODE          = 'BGP'; // Used in card serial — change per race
+const SESSION_TYPE       = 'Qualifying';
+// duplicate removed
+const QUESTIONS_PER_LAP  = 5;
+const PENALTY_SECS       = 10;
+const ANSWER_PAUSE       = 2000;
+const LAP_PAUSE          = false;   // No lap screen — auto-continue
+const LAP_PAUSE_SECS     = 0;
+const BEST_TIME_ONLY     = true;
+const PAR_TIME           = 210;     // 3:30.0 in seconds — beat this for an advantage
+// ─────────────────────────────────────────────────────────────────────────────
+// ── DECKS ─────────────────────────────────────────────────────────────────────
+// DRIVER DECK — 50 drivers, 6 stats each
+// Stats: wins (race wins), poles (pole positions), titles (WDC titles),
+//        seasons (F1 seasons raced), podiums (total podiums), networth (est. $M)
+// Stats: wins, poles, titles, seasons, podiums, networth, fastlaps, dnfs, points, debut,
+//        salary (est. career total $M), lapsled (career laps led), km (career km driven ÷10),
+//        tyres (distinct F1 tyre manufacturers used in career)
+const DRIVER_DECK = [
+  { name:'Lewis Hamilton', flag:'🇬🇧', team:'Mercedes / Ferrari', helmet:{base:'#00D2BE',stripe:'#fff',visor:'#222'},
+    stats:{ wins:105, poles:104, titles:7, seasons:19, podiums:203, networth:350, fastlaps:67, dnfs:49, points:4907, debut:2007, salary:800, lapsled:5765, km:105800, tyres:3 }},
+  { name:'Michael Schumacher', flag:'🇩🇪', team:'Ferrari / Benetton', helmet:{base:'#e8132a',stripe:'#fff',visor:'#111'},
+    stats:{ wins:91, poles:68, titles:7, seasons:19, podiums:155, networth:600, fastlaps:77, dnfs:55, points:1566, debut:1991, salary:900, lapsled:5111, km:99800, tyres:4 }},
+  { name:'Ayrton Senna', flag:'🇧🇷', team:'McLaren / Lotus', helmet:{base:'#009c3b',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:41, poles:65, titles:3, seasons:10, podiums:80, networth:400, fastlaps:19, dnfs:43, points:614, debut:1984, salary:120, lapsled:2931, km:49200, tyres:4 }},
+  { name:'Alain Prost', flag:'🇫🇷', team:'McLaren / Ferrari', helmet:{base:'#0055A4',stripe:'#EF4135',visor:'#222'},
+    stats:{ wins:51, poles:33, titles:4, seasons:13, podiums:106, networth:180, fastlaps:41, dnfs:42, points:798, debut:1980, salary:80, lapsled:2683, km:60800, tyres:5 }},
+  { name:'Max Verstappen', flag:'🇳🇱', team:'Red Bull', helmet:{base:'#1e3a8a',stripe:'#f97316',visor:'#111'},
+    stats:{ wins:63, poles:44, titles:4, seasons:10, podiums:114, networth:60, fastlaps:32, dnfs:38, points:2960, debut:2015, salary:600, lapsled:4034, km:55200, tyres:2 }},
+  { name:'Sebastian Vettel', flag:'🇩🇪', team:'Red Bull / Ferrari', helmet:{base:'#f97316',stripe:'#fff',visor:'#111'},
+    stats:{ wins:53, poles:57, titles:4, seasons:16, podiums:122, networth:140, fastlaps:38, dnfs:48, points:3098, debut:2007, salary:480, lapsled:3695, km:88400, tyres:3 }},
+  { name:'Fernando Alonso', flag:'🇪🇸', team:'Renault / Ferrari / Aston Martin', helmet:{base:'#0055A4',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:32, poles:22, titles:2, seasons:22, podiums:106, networth:260, fastlaps:23, dnfs:61, points:2267, debut:2001, salary:420, lapsled:2544, km:120400, tyres:4 }},
+  { name:'Nigel Mansell', flag:'🇬🇧', team:'Williams / Ferrari', helmet:{base:'#012169',stripe:'#C8102E',visor:'#222'},
+    stats:{ wins:31, poles:32, titles:1, seasons:15, podiums:59, networth:50, fastlaps:30, dnfs:70, points:482, debut:1980, salary:20, lapsled:2058, km:72100, tyres:5 }},
+  { name:'Niki Lauda', flag:'🇦🇹', team:'Ferrari / McLaren', helmet:{base:'#EF3340',stripe:'#fff',visor:'#111'},
+    stats:{ wins:25, poles:24, titles:3, seasons:13, podiums:54, networth:500, fastlaps:25, dnfs:49, points:420, debut:1971, salary:15, lapsled:1401, km:57900, tyres:4 }},
+  { name:'Damon Hill', flag:'🇬🇧', team:'Williams / Arrows', helmet:{base:'#012169',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:22, poles:20, titles:1, seasons:9, podiums:42, networth:35, fastlaps:19, dnfs:27, points:360, debut:1992, salary:18, lapsled:1455, km:40800, tyres:3 }},
+  { name:'Jenson Button', flag:'🇬🇧', team:'Brawn / McLaren / Honda', helmet:{base:'#fff',stripe:'#e8132a',visor:'#111'},
+    stats:{ wins:15, poles:8, titles:1, seasons:17, podiums:50, networth:150, fastlaps:8, dnfs:58, points:1235, debut:2000, salary:120, lapsled:951, km:91300, tyres:3 }},
+  { name:'Mika Häkkinen', flag:'🇫🇮', team:'McLaren', helmet:{base:'#C8102E',stripe:'#fff',visor:'#222'},
+    stats:{ wins:20, poles:26, titles:2, seasons:9, podiums:51, networth:60, fastlaps:25, dnfs:35, points:420, debut:1991, salary:25, lapsled:1454, km:43500, tyres:3 }},
+  { name:'Kimi Räikkönen', flag:'🇫🇮', team:'Ferrari / McLaren / Lotus', helmet:{base:'#e8132a',stripe:'#fff',visor:'#111'},
+    stats:{ wins:21, poles:18, titles:1, seasons:19, podiums:103, networth:150, fastlaps:46, dnfs:68, points:1873, debut:2001, salary:200, lapsled:1744, km:99600, tyres:3 }},
+  { name:'Eddie Irvine', flag:'🇬🇧', team:'Ferrari / Jaguar', helmet:{base:'#006400',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:4, poles:0, titles:0, seasons:10, podiums:26, networth:120, fastlaps:1, dnfs:42, points:191, debut:1993, salary:12, lapsled:152, km:47800, tyres:3 }},
+  { name:'James Hunt', flag:'🇬🇧', team:'McLaren / Hesketh', helmet:{base:'#C8102E',stripe:'#fff',visor:'#222'},
+    stats:{ wins:10, poles:14, titles:1, seasons:8, podiums:23, networth:10, fastlaps:8, dnfs:42, points:179, debut:1973, salary:2, lapsled:618, km:31200, tyres:3 }},
+  { name:'Juan Manuel Fangio', flag:'🇦🇷', team:'Ferrari / Mercedes / Maserati', helmet:{base:'#74acdf',stripe:'#fff',visor:'#333'},
+    stats:{ wins:24, poles:29, titles:5, seasons:8, podiums:35, networth:10, fastlaps:23, dnfs:18, points:277, debut:1950, salary:1, lapsled:1347, km:14800, tyres:2 }},
+  { name:'HH Frentzen', flag:'🇩🇪', team:'Williams / Jordan / Sauber', helmet:{base:'#888',stripe:'#fff',visor:'#222'},
+    stats:{ wins:3, poles:2, titles:0, seasons:11, podiums:18, networth:8, fastlaps:6, dnfs:46, points:174, debut:1994, salary:8, lapsled:312, km:51200, tyres:3 }},
+  { name:'Lando Norris', flag:'🇬🇧', team:'McLaren', helmet:{base:'#FF8000',stripe:'#fff',visor:'#111'},
+    stats:{ wins:5, poles:10, titles:0, seasons:6, podiums:34, networth:23, fastlaps:8, dnfs:18, points:1026, debut:2019, salary:120, lapsled:692, km:28400, tyres:2 }},
+  { name:'Jackie Stewart', flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', team:'Tyrrell / Matra', helmet:{base:'#012169',stripe:'#ffdf00',visor:'#333'},
+    stats:{ wins:27, poles:17, titles:3, seasons:9, podiums:43, networth:60, fastlaps:15, dnfs:30, points:360, debut:1965, salary:2, lapsled:1462, km:28700, tyres:3 }},
+  { name:'Emerson Fittipaldi', flag:'🇧🇷', team:'Lotus / McLaren', helmet:{base:'#009c3b',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:14, poles:6, titles:2, seasons:10, podiums:35, networth:20, fastlaps:6, dnfs:29, points:281, debut:1970, salary:3, lapsled:1012, km:33400, tyres:3 }},
+  { name:'Carlos Sainz Jr', flag:'🇪🇸', team:'Ferrari / McLaren / Williams', helmet:{base:'#e8132a',stripe:'#ffdf00',visor:'#111'},
+    stats:{ wins:3, poles:5, titles:0, seasons:10, podiums:23, networth:20, fastlaps:5, dnfs:28, points:1021, debut:2015, salary:80, lapsled:521, km:55300, tyres:2 }},
+  { name:'Charles Leclerc', flag:'🇲🇨', team:'Ferrari', helmet:{base:'#e8132a',stripe:'#fff',visor:'#111'},
+    stats:{ wins:8, poles:25, titles:0, seasons:7, podiums:42, networth:30, fastlaps:8, dnfs:26, points:1404, debut:2018, salary:120, lapsled:1123, km:37800, tyres:2 }},
+  { name:'George Russell', flag:'🇬🇧', team:'Mercedes / Williams', helmet:{base:'#00D2BE',stripe:'#fff',visor:'#222'},
+    stats:{ wins:3, poles:4, titles:0, seasons:7, podiums:18, networth:12, fastlaps:7, dnfs:14, points:638, debut:2019, salary:45, lapsled:489, km:37200, tyres:2 }},
+  { name:'Oscar Piastri', flag:'🇦🇺', team:'McLaren', helmet:{base:'#FF8000',stripe:'#fff',visor:'#111'},
+    stats:{ wins:3, poles:3, titles:0, seasons:3, podiums:15, networth:8, fastlaps:4, dnfs:5, points:482, debut:2023, salary:20, lapsled:398, km:15900, tyres:1 }},
+  { name:'Rubens Barrichello', flag:'🇧🇷', team:'Ferrari / Williams / Brawn', helmet:{base:'#009c3b',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:11, poles:14, titles:0, seasons:19, podiums:68, networth:30, fastlaps:17, dnfs:62, points:658, debut:1993, salary:25, lapsled:944, km:97800, tyres:4 }},
+  { name:'Romain Grosjean', flag:'🇨🇭', team:'Haas / Lotus / Renault', helmet:{base:'#E8002D',stripe:'#fff',visor:'#111'},
+    stats:{ wins:0, poles:0, titles:0, seasons:9, podiums:10, networth:8, fastlaps:1, dnfs:45, points:391, debut:2009, salary:5, lapsled:122, km:47100, tyres:3 }},
+  { name:'Ralf Schumacher', flag:'🇩🇪', team:'Williams / Toyota', helmet:{base:'#005EB8',stripe:'#fff',visor:'#111'},
+    stats:{ wins:6, poles:6, titles:0, seasons:11, podiums:27, networth:18, fastlaps:8, dnfs:43, points:329, debut:1997, salary:22, lapsled:512, km:55400, tyres:3 }},
+  { name:'Nelson Piquet', flag:'🇧🇷', team:'Brabham / Williams / Lotus', helmet:{base:'#009c3b',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:23, poles:24, titles:3, seasons:17, podiums:60, networth:50, fastlaps:23, dnfs:67, points:485, debut:1978, salary:10, lapsled:1742, km:74100, tyres:5 }},
+  { name:'Gilles Villeneuve', flag:'🇨🇦', team:'Ferrari', helmet:{base:'#e8132a',stripe:'#fff',visor:'#111'},
+    stats:{ wins:6, poles:2, titles:0, seasons:5, podiums:13, networth:5, fastlaps:8, dnfs:23, points:107, debut:1977, salary:2, lapsled:429, km:21400, tyres:2 }},
+  { name:'Jim Clark', flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', team:'Lotus', helmet:{base:'#006400',stripe:'#ffdf00',visor:'#333'},
+    stats:{ wins:25, poles:33, titles:2, seasons:8, podiums:32, networth:5, fastlaps:28, dnfs:22, points:274, debut:1960, salary:1, lapsled:1943, km:24100, tyres:3 }},
+  { name:'Stirling Moss', flag:'🇬🇧', team:'Vanwall / Mercedes / Maserati', helmet:{base:'#006400',stripe:'#fff',visor:'#333'},
+    stats:{ wins:16, poles:16, titles:0, seasons:14, podiums:24, networth:15, fastlaps:20, dnfs:42, points:186, debut:1951, salary:1, lapsled:832, km:37900, tyres:3 }},
+  { name:'Graham Hill', flag:'🇬🇧', team:'Lotus / BRM', helmet:{base:'#012169',stripe:'#fff',visor:'#333'},
+    stats:{ wins:14, poles:13, titles:2, seasons:18, podiums:36, networth:5, fastlaps:10, dnfs:64, points:289, debut:1958, salary:1, lapsled:844, km:49800, tyres:3 }},
+  { name:'Jack Brabham', flag:'🇦🇺', team:'Brabham / Cooper', helmet:{base:'#006400',stripe:'#ffdf00',visor:'#333'},
+    stats:{ wins:14, poles:13, titles:3, seasons:16, podiums:31, networth:10, fastlaps:12, dnfs:53, points:261, debut:1955, salary:1, lapsled:981, km:40200, tyres:3 }},
+  { name:'Jochen Rindt', flag:'🇦🇹', team:'Lotus / Brabham', helmet:{base:'#fff',stripe:'#000',visor:'#222'},
+    stats:{ wins:6, poles:10, titles:1, seasons:6, podiums:13, networth:5, fastlaps:3, dnfs:24, points:109, debut:1964, salary:1, lapsled:488, km:16200, tyres:2 }},
+  { name:'Mario Andretti', flag:'🇺🇸', team:'Lotus / Ferrari / Parnelli', helmet:{base:'#B22222',stripe:'#fff',visor:'#222'},
+    stats:{ wins:12, poles:18, titles:1, seasons:14, podiums:19, networth:50, fastlaps:10, dnfs:53, points:180, debut:1968, salary:2, lapsled:821, km:46300, tyres:4 }},
+  { name:'Jody Scheckter', flag:'🇿🇦', team:'Ferrari / Wolf / Tyrrell', helmet:{base:'#009c3b',stripe:'#fff',visor:'#222'},
+    stats:{ wins:10, poles:3, titles:1, seasons:9, podiums:33, networth:200, fastlaps:3, dnfs:30, points:255, debut:1972, salary:3, lapsled:612, km:34100, tyres:3 }},
+  { name:'Carlos Reutemann', flag:'🇦🇷', team:'Williams / Brabham / Ferrari', helmet:{base:'#74acdf',stripe:'#fff',visor:'#222'},
+    stats:{ wins:12, poles:6, titles:0, seasons:12, podiums:45, networth:20, fastlaps:6, dnfs:46, points:310, debut:1972, salary:3, lapsled:721, km:44800, tyres:4 }},
+  { name:'Gerhard Berger', flag:'🇦🇹', team:'Ferrari / McLaren / Benetton', helmet:{base:'#EF3340',stripe:'#fff',visor:'#111'},
+    stats:{ wins:10, poles:12, titles:0, seasons:14, podiums:48, networth:30, fastlaps:21, dnfs:55, points:385, debut:1984, salary:15, lapsled:698, km:69200, tyres:4 }},
+  { name:'David Coulthard', flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', team:'McLaren / Williams / Red Bull', helmet:{base:'#C8102E',stripe:'#005EB8',visor:'#222'},
+    stats:{ wins:13, poles:12, titles:0, seasons:15, podiums:62, networth:65, fastlaps:18, dnfs:50, points:535, debut:1994, salary:60, lapsled:812, km:76200, tyres:3 }},
+  { name:'Mick Schumacher', flag:'🇩🇪', team:'Haas', helmet:{base:'#e8132a',stripe:'#fff',visor:'#111'},
+    stats:{ wins:0, poles:0, titles:0, seasons:3, podiums:0, networth:5, fastlaps:0, dnfs:8, points:12, debut:2021, salary:2, lapsled:4, km:9800, tyres:1 }},
+  { name:'Valtteri Bottas', flag:'🇫🇮', team:'Mercedes / Williams / Alfa Romeo', helmet:{base:'#00D2BE',stripe:'#fff',visor:'#222'},
+    stats:{ wins:10, poles:20, titles:0, seasons:12, podiums:67, networth:25, fastlaps:19, dnfs:38, points:1797, debut:2013, salary:90, lapsled:1122, km:63800, tyres:3 }},
+  { name:'Felipe Massa', flag:'🇧🇷', team:'Ferrari / Williams / Sauber', helmet:{base:'#009c3b',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:11, poles:16, titles:0, seasons:16, podiums:41, networth:20, fastlaps:15, dnfs:50, points:1167, debut:2002, salary:30, lapsled:789, km:81100, tyres:3 }},
+  { name:'Mark Webber', flag:'🇦🇺', team:'Red Bull / Williams / Jaguar', helmet:{base:'#1e3a8a',stripe:'#f97316',visor:'#111'},
+    stats:{ wins:9, poles:13, titles:0, seasons:13, podiums:42, networth:30, fastlaps:19, dnfs:44, points:1047, debut:2002, salary:35, lapsled:912, km:67400, tyres:3 }},
+  { name:'Robert Kubica', flag:'🇵🇱', team:'BMW Sauber / Renault / Williams', helmet:{base:'#fff',stripe:'#DC143C',visor:'#222'},
+    stats:{ wins:1, poles:1, titles:0, seasons:10, podiums:12, networth:15, fastlaps:1, dnfs:25, points:273, debut:2006, salary:8, lapsled:198, km:40100, tyres:3 }},
+  { name:'Nico Rosberg', flag:'🇩🇪', team:'Mercedes / Williams', helmet:{base:'#00D2BE',stripe:'#fff',visor:'#222'},
+    stats:{ wins:23, poles:30, titles:1, seasons:11, podiums:57, networth:50, fastlaps:20, dnfs:31, points:1594, debut:2006, salary:160, lapsled:1496, km:58200, tyres:3 }},
+  { name:'Daniel Ricciardo', flag:'🇦🇺', team:'Red Bull / Renault / McLaren', helmet:{base:'#1e3a8a',stripe:'#ffdf00',visor:'#111'},
+    stats:{ wins:8, poles:3, titles:0, seasons:14, podiums:32, networth:50, fastlaps:16, dnfs:44, points:1311, debut:2011, salary:80, lapsled:742, km:73600, tyres:3 }},
+  { name:'Esteban Ocon', flag:'🇫🇷', team:'Alpine / Force India / Mercedes', helmet:{base:'#0055A4',stripe:'#EF4135',visor:'#222'},
+    stats:{ wins:1, poles:0, titles:0, seasons:8, podiums:3, networth:8, fastlaps:2, dnfs:19, points:412, debut:2016, salary:10, lapsled:143, km:41200, tyres:2 }},
+  { name:'Pierre Gasly', flag:'🇫🇷', team:'AlphaTauri / Red Bull / Alpine', helmet:{base:'#0055A4',stripe:'#EF4135',visor:'#222'},
+    stats:{ wins:1, poles:0, titles:0, seasons:7, podiums:3, networth:10, fastlaps:3, dnfs:21, points:456, debut:2017, salary:12, lapsled:218, km:36900, tyres:2 }},
+  { name:'Lance Stroll', flag:'🇨🇦', team:'Aston Martin / Williams / Racing Point', helmet:{base:'#006F62',stripe:'#CEDC00',visor:'#111'},
+    stats:{ wins:0, poles:1, titles:0, seasons:9, podiums:3, networth:10, fastlaps:0, dnfs:26, points:255, debut:2017, salary:5, lapsled:91, km:46800, tyres:2 }},
+  { name:'Sergio Pérez', flag:'🇲🇽', team:'Red Bull / Racing Point / Force India', helmet:{base:'#1e3a8a',stripe:'#006400',visor:'#111'},
+    stats:{ wins:13, poles:3, titles:0, seasons:15, podiums:56, networth:40, fastlaps:14, dnfs:45, points:1834, debut:2011, salary:110, lapsled:921, km:79100, tyres:3 }},
+];
+
+// CONSTRUCTOR DECK — 20 teams
+// Stats: wins, titles, seasons, drivers, podiums, founded,
+//        budget (peak season budget $M), namechanges (times team changed name same lineage),
+//        lifespan (years active before folding — 999 = still active),
+//        mgryears (longest-serving principal's years in post),
+//        mgrteams (number of teams that principal served)
+const CONSTRUCTOR_DECK = [
+  { name:'Ferrari', flag:'🇮🇹', team:'Scuderia Ferrari', helmet:{base:'#e8132a',stripe:'#fff',visor:'#111'},
+    stats:{ wins:243, titles:16, seasons:75, drivers:112, podiums:820, founded:1950, budget:700, namechanges:1, lifespan:999, mgryears:22, mgrteams:1 }},
+  { name:'McLaren', flag:'🇬🇧', team:'McLaren F1 Team', helmet:{base:'#FF8000',stripe:'#fff',visor:'#111'},
+    stats:{ wins:183, titles:8, seasons:57, drivers:67, podiums:544, founded:1966, budget:550, namechanges:3, lifespan:999, mgryears:16, mgrteams:1 }},
+  { name:'Williams', flag:'🇬🇧', team:'Williams Racing', helmet:{base:'#005EB8',stripe:'#fff',visor:'#111'},
+    stats:{ wins:114, titles:9, seasons:47, drivers:66, podiums:312, founded:1977, budget:180, namechanges:2, lifespan:999, mgryears:37, mgrteams:1 }},
+  { name:'Mercedes', flag:'🇩🇪', team:'Mercedes-AMG Petronas', helmet:{base:'#00D2BE',stripe:'#fff',visor:'#222'},
+    stats:{ wins:125, titles:8, seasons:31, drivers:21, podiums:312, founded:1954, budget:600, namechanges:4, lifespan:999, mgryears:14, mgrteams:1 }},
+  { name:'Red Bull', flag:'🇦🇹', team:'Red Bull Racing', helmet:{base:'#1e3a8a',stripe:'#f97316',visor:'#111'},
+    stats:{ wins:122, titles:6, seasons:21, drivers:26, podiums:322, founded:2005, budget:580, namechanges:1, lifespan:999, mgryears:20, mgrteams:1 }},
+  { name:'Lotus', flag:'🇬🇧', team:'Team Lotus / Lotus Cars', helmet:{base:'#006400',stripe:'#ffdf00',visor:'#333'},
+    stats:{ wins:79, titles:7, seasons:35, drivers:76, podiums:185, founded:1958, budget:12, namechanges:5, lifespan:35, mgryears:21, mgrteams:1 }},
+  { name:'Brabham', flag:'🇦🇺', team:'Motor Racing Developments', helmet:{base:'#006400',stripe:'#fff',visor:'#333'},
+    stats:{ wins:35, titles:2, seasons:30, drivers:45, podiums:91, founded:1962, budget:8, namechanges:2, lifespan:30, mgryears:26, mgrteams:1 }},
+  { name:'Renault', flag:'🇫🇷', team:'Renault F1 / Alpine', helmet:{base:'#0055A4',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:35, titles:2, seasons:30, drivers:42, podiums:111, founded:1977, budget:400, namechanges:4, lifespan:999, mgryears:8, mgrteams:2 }},
+  { name:'Benetton', flag:'🇬🇧', team:'Benetton Formula', helmet:{base:'#006400',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:27, titles:2, seasons:14, drivers:21, podiums:78, founded:1986, budget:80, namechanges:3, lifespan:14, mgryears:7, mgrteams:2 }},
+  { name:'Tyrrell', flag:'🇬🇧', team:'Tyrrell Racing', helmet:{base:'#006400',stripe:'#fff',visor:'#333'},
+    stats:{ wins:23, titles:1, seasons:28, drivers:54, podiums:78, founded:1970, budget:15, namechanges:1, lifespan:28, mgryears:28, mgrteams:1 }},
+  { name:'BRM', flag:'🇬🇧', team:'British Racing Motors', helmet:{base:'#006400',stripe:'#fff',visor:'#333'},
+    stats:{ wins:17, titles:1, seasons:18, drivers:43, podiums:65, founded:1951, budget:5, namechanges:1, lifespan:18, mgryears:14, mgrteams:1 }},
+  { name:'Cooper', flag:'🇬🇧', team:'Cooper Car Company', helmet:{base:'#006400',stripe:'#ffdf00',visor:'#333'},
+    stats:{ wins:16, titles:2, seasons:14, drivers:38, podiums:52, founded:1950, budget:3, namechanges:1, lifespan:14, mgryears:14, mgrteams:1 }},
+  { name:'Maserati', flag:'🇮🇹', team:'Officine Alfieri Maserati', helmet:{base:'#C8102E',stripe:'#fff',visor:'#333'},
+    stats:{ wins:9, titles:0, seasons:5, drivers:28, podiums:27, founded:1950, budget:2, namechanges:1, lifespan:5, mgryears:5, mgrteams:1 }},
+  { name:'Alfa Romeo', flag:'🇮🇹', team:'Alfa Romeo Racing', helmet:{base:'#C8102E',stripe:'#fff',visor:'#222'},
+    stats:{ wins:11, titles:2, seasons:15, drivers:19, podiums:35, founded:1950, budget:200, namechanges:4, lifespan:999, mgryears:8, mgrteams:2 }},
+  { name:'Jordan', flag:'🇮🇪', team:'Jordan Grand Prix', helmet:{base:'#ffdf00',stripe:'#006400',visor:'#222'},
+    stats:{ wins:4, titles:0, seasons:14, drivers:37, podiums:22, founded:1991, budget:70, namechanges:1, lifespan:14, mgryears:14, mgrteams:1 }},
+  { name:'Force India', flag:'🇮🇳', team:'Force India / Racing Point', helmet:{base:'#F596C8',stripe:'#fff',visor:'#111'},
+    stats:{ wins:0, titles:0, seasons:11, drivers:18, podiums:16, founded:2008, budget:120, namechanges:3, lifespan:999, mgryears:6, mgrteams:1 }},
+  { name:'Haas', flag:'🇺🇸', team:'Haas F1 Team', helmet:{base:'#E8002D',stripe:'#fff',visor:'#111'},
+    stats:{ wins:0, titles:0, seasons:9, drivers:14, podiums:0, founded:2016, budget:160, namechanges:1, lifespan:999, mgryears:9, mgrteams:1 }},
+  { name:'Sauber', flag:'🇨🇭', team:'Sauber / Alfa Romeo / Stake', helmet:{base:'#e8132a',stripe:'#fff',visor:'#111'},
+    stats:{ wins:1, titles:0, seasons:31, drivers:57, podiums:6, founded:1993, budget:190, namechanges:4, lifespan:999, mgryears:12, mgrteams:1 }},
+  { name:'Aston Martin', flag:'🇬🇧', team:'Aston Martin Aramco', helmet:{base:'#006F62',stripe:'#CEDC00',visor:'#111'},
+    stats:{ wins:0, titles:0, seasons:5, drivers:6, podiums:5, founded:2021, budget:400, namechanges:1, lifespan:999, mgryears:5, mgrteams:1 }},
+  { name:'Vanwall', flag:'🇬🇧', team:'Vanwall Racing', helmet:{base:'#006400',stripe:'#fff',visor:'#333'},
+    stats:{ wins:9, titles:1, seasons:5, drivers:8, podiums:16, founded:1954, budget:2, namechanges:1, lifespan:5, mgryears:5, mgrteams:1 }},
+];
+
+// CIRCUIT DECK — 15 circuits
+// Stats: laps (race laps), length (circuit length km ×10 = integer, e.g. 5891 = 5.891km),
+//        capacity (grandstand seats ÷1000), corners (number of corners),
+//        first (year first F1 GP held), records (lap records set there — glamour stat)
+const CIRCUIT_DECK = [
+  { name:'Silverstone', flag:'🇬🇧', team:'British Grand Prix · Northants', helmet:{base:'#012169',stripe:'#C8102E',visor:'#222'},
+    stats:{ laps:52, length:5891, capacity:150, corners:18, first:1950, records:1 }},
+  { name:'Monza', flag:'🇮🇹', team:'Italian Grand Prix · Lombardy', helmet:{base:'#e8132a',stripe:'#fff',visor:'#111'},
+    stats:{ laps:53, length:5793, capacity:115, corners:11, first:1950, records:1 }},
+  { name:'Monaco', flag:'🇲🇨', team:'Monaco Grand Prix · Monte Carlo', helmet:{base:'#CE1126',stripe:'#fff',visor:'#222'},
+    stats:{ laps:78, length:3337, capacity:37, corners:19, first:1950, records:1 }},
+  { name:'Spa-Francorchamps', flag:'🇧🇪', team:'Belgian Grand Prix · Ardennes', helmet:{base:'#000',stripe:'#F5D800',visor:'#222'},
+    stats:{ laps:44, length:7004, capacity:80, corners:20, first:1950, records:1 }},
+  { name:'Nürburgring', flag:'🇩🇪', team:'German Grand Prix · Eifel', helmet:{base:'#000',stripe:'#DD0000',visor:'#111'},
+    stats:{ laps:60, length:5148, capacity:100, corners:15, first:1951, records:1 }},
+  { name:'Suzuka', flag:'🇯🇵', team:'Japanese Grand Prix · Mie', helmet:{base:'#BC002D',stripe:'#fff',visor:'#111'},
+    stats:{ laps:53, length:5807, capacity:155, corners:18, first:1987, records:1 }},
+  { name:'Interlagos', flag:'🇧🇷', team:'Brazilian Grand Prix · São Paulo', helmet:{base:'#009c3b',stripe:'#ffdf00',visor:'#222'},
+    stats:{ laps:71, length:4309, capacity:60, corners:15, first:1973, records:1 }},
+  { name:'Circuit de Catalunya', flag:'🇪🇸', team:'Spanish Grand Prix · Barcelona', helmet:{base:'#c60b1e',stripe:'#ffc400',visor:'#222'},
+    stats:{ laps:66, length:4657, capacity:139, corners:16, first:1991, records:1 }},
+  { name:'Hungaroring', flag:'🇭🇺', team:'Hungarian Grand Prix · Budapest', helmet:{base:'#CE2939',stripe:'#fff',visor:'#222'},
+    stats:{ laps:70, length:4381, capacity:110, corners:14, first:1986, records:1 }},
+  { name:'Bahrain', flag:'🇧🇭', team:'Bahrain Grand Prix · Sakhir', helmet:{base:'#CE1126',stripe:'#fff',visor:'#111'},
+    stats:{ laps:57, length:5412, capacity:50, corners:15, first:2004, records:1 }},
+  { name:'Yas Marina', flag:'🇦🇪', team:'Abu Dhabi Grand Prix · UAE', helmet:{base:'#000080',stripe:'#00ff87',visor:'#111'},
+    stats:{ laps:58, length:5281, capacity:50, corners:16, first:2009, records:1 }},
+  { name:'COTA', flag:'🇺🇸', team:'US Grand Prix · Austin Texas', helmet:{base:'#B22222',stripe:'#fff',visor:'#222'},
+    stats:{ laps:56, length:5513, capacity:120, corners:20, first:2012, records:1 }},
+  { name:'Imola', flag:'🇮🇹', team:'Emilia Romagna GP · Bologna', helmet:{base:'#009246',stripe:'#fff',visor:'#111'},
+    stats:{ laps:63, length:4909, capacity:100, corners:19, first:1980, records:1 }},
+  { name:'Zandvoort', flag:'🇳🇱', team:'Dutch Grand Prix · North Holland', helmet:{base:'#AE1C28',stripe:'#fff',visor:'#222'},
+    stats:{ laps:72, length:4259, capacity:105, corners:14, first:1952, records:1 }},
+  { name:'Baku City Circuit', flag:'🇦🇿', team:'Azerbaijan Grand Prix · Baku', helmet:{base:'#0092BC',stripe:'#E8003D',visor:'#111'},
+    stats:{ laps:51, length:6003, capacity:30, corners:20, first:2016, records:1 }},
+];
+
+// ENGINE DECK — 10 engine manufacturers
+// Stats: wins (races won with this engine), titles (WCC+WDC titles won powered by this engine),
+//        seasons (seasons in F1), teams (distinct teams supplied), cylinders (engine cylinders — glamour),
+//        rpm (max RPM ×100 — era-appropriate glamour stat)
+const ENGINE_DECK = [
+  { name:'Ferrari V12', flag:'🇮🇹', team:'Scuderia Ferrari · 1950–1995 era', helmet:{base:'#e8132a',stripe:'#fff',visor:'#111'},
+    stats:{ wins:113, titles:10, seasons:22, teams:1, cylinders:12, rpm:170 }},
+  { name:'Renault V10', flag:'🇫🇷', team:'Renault Sport · 1989–2005 era', helmet:{base:'#0055A4',stripe:'#ffdf00',visor:'#222'},
+    stats:{ wins:91, titles:8, seasons:17, teams:4, cylinders:10, rpm:180 }},
+  { name:'Mercedes V6 Hybrid', flag:'🇩🇪', team:'Mercedes AMG HPP · 2014–present', helmet:{base:'#00D2BE',stripe:'#fff',visor:'#222'},
+    stats:{ wins:125, titles:8, seasons:11, teams:4, cylinders:6, rpm:150 }},
+  { name:'Ford Cosworth DFV', flag:'🇬🇧', team:'Cosworth · 1967–1983 era', helmet:{base:'#003087',stripe:'#C8102E',visor:'#333'},
+    stats:{ wins:155, titles:12, seasons:16, teams:48, cylinders:8, rpm:100 }},
+  { name:'Honda V6 Turbo', flag:'🇯🇵', team:'Honda Racing · 1983–1992 era', helmet:{base:'#BC002D',stripe:'#fff',visor:'#111'},
+    stats:{ wins:71, titles:6, seasons:10, teams:3, cylinders:6, rpm:130 }},
+  { name:'BMW Straight-4 Turbo', flag:'🇩🇪', team:'BMW Motorsport · 1982–1987', helmet:{base:'#1C69D4',stripe:'#fff',visor:'#111'},
+    stats:{ wins:9, titles:1, seasons:6, teams:2, cylinders:4, rpm:130 }},
+  { name:'Climax FWMV', flag:'🇬🇧', team:'Coventry Climax · 1957–1965', helmet:{base:'#006400',stripe:'#ffdf00',visor:'#333'},
+    stats:{ wins:40, titles:5, seasons:9, teams:8, cylinders:8, rpm:90 }},
+  { name:'BRM H16', flag:'🇬🇧', team:'British Racing Motors · 1950s–60s', helmet:{base:'#006400',stripe:'#fff',visor:'#333'},
+    stats:{ wins:17, titles:1, seasons:11, teams:2, cylinders:16, rpm:100 }},
+  { name:'TAG-Porsche V6 Turbo', flag:'🇩🇪', team:'TAG / Porsche · 1983–1987', helmet:{base:'#fff',stripe:'#e8132a',visor:'#111'},
+    stats:{ wins:25, titles:3, seasons:5, teams:1, cylinders:6, rpm:120 }},
+  { name:'Honda RA121E V12', flag:'🇯🇵', team:'Honda Racing · 1989–1992', helmet:{base:'#BC002D',stripe:'#fff',visor:'#222'},
+    stats:{ wins:44, titles:4, seasons:4, teams:2, cylinders:12, rpm:150 }},
+];
+
+// CATEGORIES per deck type
+const DRIVER_CATEGORIES = [
+  { key:'wins',     label:'Most Race Wins' },
+  { key:'poles',    label:'Most Pole Positions' },
+  { key:'titles',   label:'Most World Championships' },
+  { key:'seasons',  label:'Most F1 Seasons' },
+  { key:'podiums',  label:'Most Podiums' },
+  { key:'networth', label:'Highest Net Worth ($M)' },
+  { key:'fastlaps', label:'Most Fastest Laps' },
+  { key:'dnfs',     label:'Most Race Retirements (DNFs)' },
+  { key:'points',   label:'Most Career Points' },
+  { key:'debut',    label:'Earliest F1 Debut Year', lowestWins:true },
+  { key:'salary',   label:'Highest Estimated Career Earnings ($M)' },
+  { key:'lapsled',  label:'Most Laps Led in Career' },
+  { key:'km',       label:'Most Career Kilometres Driven (÷10)' },
+  { key:'tyres',    label:'Most Tyre Manufacturers Used in Career' },
+];
+const CONSTRUCTOR_CATEGORIES = [
+  { key:'wins',        label:'Most Race Wins' },
+  { key:'titles',      label:'Most Constructors\' Titles' },
+  { key:'seasons',     label:'Most Seasons in F1' },
+  { key:'drivers',     label:'Most Different Drivers Used' },
+  { key:'podiums',     label:'Most Podiums Ever' },
+  { key:'founded',     label:'Founded Most Recently' },
+  { key:'budget',      label:'Highest Peak Season Budget ($M)' },
+  { key:'namechanges', label:'Most Team Name Changes' },
+  { key:'lifespan',    label:'Most Years Active' },
+  { key:'mgryears',    label:'Longest-Serving Team Principal (Years)' },
+  { key:'mgrteams',    label:'Most Teams Served by Principal' },
+];
+const CIRCUIT_CATEGORIES = [
+  { key:'laps', label:'Most Race Laps' },
+  { key:'length', label:'Longest Circuit (m)' },
+  { key:'capacity', label:'Largest Grandstand Capacity (k)' },
+  { key:'corners', label:'Most Corners' },
+  { key:'first', label:'Most Recently Joined Calendar' },
+];
+const ENGINE_CATEGORIES = [
+  { key:'wins', label:'Most Race Wins Powered' },
+  { key:'titles', label:'Most Titles Powered' },
+  { key:'seasons', label:'Most Seasons in F1' },
+  { key:'teams', label:'Supplied to Most Teams' },
+  { key:'cylinders', label:'Most Engine Cylinders' },
+  { key:'rpm', label:'Highest Max RPM (×100)' },
+];
+
+// Active deck — drivers only for this GP, but architected for future deck switching
+const DECK = DRIVER_DECK;
+const CATEGORIES = DRIVER_CATEGORIES;
+
+// ── SEEDED RNG ────────────────────────────────────────────────────────────────
+function makeMulberry32(seed) {
+  let s = seed >>> 0;
+  return { next() {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }};
+}
+function getDailySeed() {
+  const d = new Date();
+  return (d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate()) >>> 0;
+}
+
+// ── HELMET SVG ────────────────────────────────────────────────────────────────
+function drawHelmet(svgEl, colors) {
+  const b = colors.base, s = colors.stripe, v = colors.visor;
+  svgEl.innerHTML = `
+    <ellipse cx="30" cy="26" rx="26" ry="20" fill="${b}"/>
+    <rect x="10" y="14" width="40" height="8" fill="${s}" opacity="0.3"/>
+    <ellipse cx="30" cy="36" rx="22" ry="8" fill="${b}" opacity="0.7"/>
+    <ellipse cx="30" cy="22" rx="18" ry="8" fill="${v}" opacity="0.85" rx="4"/>
+    <ellipse cx="30" cy="26" rx="26" ry="20" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  `;
+}
+
+// ── GRANDSTAND ────────────────────────────────────────────────────────────────
+function buildGrandstand() {
+  const gs = document.getElementById('grandstand');
+  const cols = ['#e8132a','#f5c842','#3b82f6','#22c55e','#e8132a','#888','#f5c842','#3b82f6'];
+  for (let i = 0; i < 8; i++) {
+    const block = document.createElement('div');
+    block.className = 'gs-block';
+    for (let r = 0; r < 2; r++) {
+      const row = document.createElement('div');
+      row.className = 'gs-row';
+      for (let s = 0; s < 5; s++) {
+        const seat = document.createElement('div');
+        seat.className = 'gs-seat';
+        seat.style.background = Math.random() > 0.15 ? cols[i] : '#1e2128';
+        seat.style.opacity = (0.6 + Math.random() * 0.4).toFixed(2);
+        row.appendChild(seat);
+      }
+      block.appendChild(row);
+    }
+    gs.appendChild(block);
+  }
+}
+
+// ── GAME STATE ────────────────────────────────────────────────────────────────
+let handle = '', rng;
+let currentLap = 1, currentQ = 0;
+let lapStartTime, lapElapsed = 0, lapPenalties = 0;
+let lapCorrect = 0, totalCorrect = 0;
+let lapTimes = [], totalTime = 0;
+let timerInterval, countdownInterval;
+let questions = [], answered = false;
+let gameComplete = false;
+let shareEmoji = [];
+
+function getDayQuestions() {
+  rng = makeMulberry32(getDailySeed());
+  const allQ = [];
+  const usedPairs = new Set();
+  let attempts = 0;
+  const recentCats = []; // track last 5 categories used
+
+  while (allQ.length < TOTAL_LAPS * QUESTIONS_PER_LAP && attempts < 5000) {
+    attempts++;
+    const ai = Math.floor(rng.next() * DECK.length);
+    const bi = Math.floor(rng.next() * DECK.length);
+    const ci = Math.floor(rng.next() * DECK.length);
+    const catI = Math.floor(rng.next() * CATEGORIES.length);
+
+    if (ai === bi || bi === ci || ai === ci) continue;
+    const cat = CATEGORIES[catI];
+
+    // Spacing rule: skip if this category appeared in the last 10 questions
+    if (recentCats.slice(-10).includes(cat.key)) continue;
+
+    const vals = [DECK[ai].stats[cat.key], DECK[bi].stats[cat.key], DECK[ci].stats[cat.key]];
+    if (vals[0] === vals[1] || vals[1] === vals[2] || vals[0] === vals[2]) continue;
+
+    const pairKey = [ai,bi,ci].sort().join('-') + cat.key;
+    if (usedPairs.has(pairKey)) continue;
+    usedPairs.add(pairKey);
+
+    const winnerIdx = cat.lowestWins
+      ? vals.indexOf(Math.min(...vals))
+      : vals.indexOf(Math.max(...vals));
+    allQ.push({ drivers:[DECK[ai],DECK[bi],DECK[ci]], cat, winnerIdx });
+    recentCats.push(cat.key);
+  }
+  return allQ;
+}
+
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+async function saveScore() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/apex_scores`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        handle, race: RACE_NAME,
+        total_time: Math.round(totalTime * 10) / 10,
+        lap_times: lapTimes.join(',')
+      })
+    });
+    return res.ok;
+  } catch(e) { return false; }
+}
+
+async function fetchLeaderboard() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_scores?race=eq.${encodeURIComponent(RACE_NAME)}&order=total_time.asc&limit=200`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }}
+    );
+    const all = await res.json();
+    // Best time per handle only
+    const best = {};
+    all.forEach(row => {
+      if (!best[row.handle] || row.total_time < best[row.handle].total_time) {
+        best[row.handle] = row;
+      }
+    });
+    return Object.values(best).sort((a,b) => a.total_time - b.total_time).slice(0, 20);
+  } catch(e) { return []; }
+}
+
+// ── GAME STATE ────────────────────────────────────────────────────────────────
+let handle = '', rng;
+let currentLap = 1, currentQ = 0;
+let lapStartTime, lapElapsed = 0, lapPenalties = 0;
+let lapCorrect = 0, totalCorrect = 0;
+let lapTimes = [], totalTime = 0;
+let timerInterval, countdownInterval;
+let questions = [], answered = false;
+let gameComplete = false;
+let shareEmoji = [];
+
+function getDayQuestions() {
+  rng = makeMulberry32(getDailySeed());
+  const allQ = [];
+  const usedPairs = new Set();
+  let attempts = 0;
+  const recentCats = []; // track last 5 categories used
+
+  while (allQ.length < TOTAL_LAPS * QUESTIONS_PER_LAP && attempts < 5000) {
+    attempts++;
+    const ai = Math.floor(rng.next() * DECK.length);
+    const bi = Math.floor(rng.next() * DECK.length);
+    const ci = Math.floor(rng.next() * DECK.length);
+    const catI = Math.floor(rng.next() * CATEGORIES.length);
+
+    if (ai === bi || bi === ci || ai === ci) continue;
+    const cat = CATEGORIES[catI];
+
+    // Spacing rule: skip if this category appeared in the last 10 questions
+    if (recentCats.slice(-10).includes(cat.key)) continue;
+
+    const vals = [DECK[ai].stats[cat.key], DECK[bi].stats[cat.key], DECK[ci].stats[cat.key]];
+    if (vals[0] === vals[1] || vals[1] === vals[2] || vals[0] === vals[2]) continue;
+
+    const pairKey = [ai,bi,ci].sort().join('-') + cat.key;
+    if (usedPairs.has(pairKey)) continue;
+    usedPairs.add(pairKey);
+
+    const winnerIdx = cat.lowestWins
+      ? vals.indexOf(Math.min(...vals))
+      : vals.indexOf(Math.max(...vals));
+    allQ.push({ drivers:[DECK[ai],DECK[bi],DECK[ci]], cat, winnerIdx });
+    recentCats.push(cat.key);
+  }
+  return allQ;
+}
+
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+async function saveScore() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/apex_scores`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        handle, race: RACE_NAME,
+        total_time: Math.round(totalTime * 10) / 10,
+        lap_times: lapTimes.join(',')
+      })
+    });
+    return res.ok;
+  } catch(e) { return false; }
+}
+
+async function fetchLeaderboard() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_scores?race=eq.${encodeURIComponent(RACE_NAME)}&order=total_time.asc&limit=200`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }}
+    );
+    const all = await res.json();
+    // Best time per handle only
+    const best = {};
+    all.forEach(row => {
+      if (!best[row.handle] || row.total_time < best[row.handle].total_time) {
+        best[row.handle] = row;
+      }
+    });
+    return Object.values(best).sort((a,b) => a.total_time - b.total_time).slice(0, 20);
+  } catch(e) { return []; }
+}
+
+// ── START ─────────────────────────────────────────────────────────────────────
+function startRace() {
+  let h = document.getElementById('handle-input').value.trim();
+  if (!h) { showToast('Enter your X handle to race'); return; }
+  if (!h.startsWith('@')) h = '@' + h;
+  handle = h;
+  localStorage.setItem('apex_handle', handle);
+  document.getElementById('handle-screen').classList.remove('show');
+  questions = getDayQuestions();
+  currentLap = 1; currentQ = 0; totalCorrect = 0; totalTime = 0;
+  lapTimes = []; shareEmoji = []; gameComplete = false;
+  startLap();
+}
+
+function startLap() {
+  lapElapsed = 0; lapPenalties = 0; lapCorrect = 0;
+  answered = false;
+  document.getElementById('lap-num').textContent = currentLap;
+  document.getElementById('venue-name').textContent = RACE_VENUE;
+  document.getElementById('lap-of').textContent = `Lap ${currentLap} of ${TOTAL_LAPS}`;
+  updatePips(-1);
+  currentQ = 0;
+  lapStartTime = performance.now();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 100);
+  loadQuestion();
+}
+
+function updateTimer() {
+  lapElapsed = (performance.now() - lapStartTime) / 1000;
+  const display = lapElapsed + lapPenalties;
+  const m = Math.floor(display / 60);
+  const s = display % 60;
+  document.getElementById('lap-timer').textContent =
+    String(m).padStart(2,'0') + ':' + s.toFixed(1).padStart(4,'0');
+}
+
+// ── QUESTION ──────────────────────────────────────────────────────────────────
+function loadQuestion() {
+  answered = false;
+  const qIdx = (currentLap - 1) * QUESTIONS_PER_LAP + currentQ;
+  const q = questions[qIdx];
+  if (!q) return;
+
+  updatePips(currentQ);
+
+  // Reset cards
+  for (let i = 0; i < 3; i++) {
+    const btn = document.getElementById('card' + i);
+    btn.className = 'helmet-btn c' + (i+1);
+    btn.disabled = true;
+    btn.style.opacity = '0';
+    btn.style.transform = 'translateY(10px)';
+    btn.style.transition = 'none';
+    document.getElementById('mark' + i).textContent = '✓';
+  }
+
+  document.getElementById('category-panel').classList.remove('visible');
+
+  // Flip cards one at a time
+  q.drivers.forEach((d, i) => {
+    drawHelmet(document.getElementById('helm' + i), d.helmet);
+    document.getElementById('flag' + i).textContent = d.flag;
+    document.getElementById('name' + i).textContent = d.name;
+    document.getElementById('team' + i).textContent = d.team;
+
+    setTimeout(() => {
+      const btn = document.getElementById('card' + i);
+      btn.style.transition = 'opacity 0.35s, transform 0.35s cubic-bezier(0.34,1.2,0.64,1)';
+      btn.style.opacity = '1';
+      btn.style.transform = 'translateY(0)';
+    }, i * 250);
+  });
+
+  // Category drops after all cards
+  setTimeout(() => {
+    document.getElementById('cat-value').textContent = q.cat.label.toUpperCase();
+    document.getElementById('category-panel').classList.add('visible');
+    // Enable buttons
+    for (let i = 0; i < 3; i++) {
+      document.getElementById('card' + i).disabled = false;
+    }
+    lapStartTime = lapStartTime; // timer continues
+  }, 900);
+}
+
+function updatePips(activeQ) {
+  for (let i = 0; i < 5; i++) {
+    const pip = document.getElementById('pip' + i);
+    pip.className = 'pip';
+    if (i < currentQ) {
+      // already answered — but we set in answer()
+    }
+    if (i === activeQ) pip.classList.add('active');
+  }
+}
+
+// ── ANSWER ────────────────────────────────────────────────────────────────────
+function answer(idx) {
+  if (answered) return;
+  answered = true;
+
+  const qIdx = (currentLap - 1) * QUESTIONS_PER_LAP + currentQ;
+  const q = questions[qIdx];
+  const correct = idx === q.winnerIdx;
+
+  // Disable all
+  for (let i = 0; i < 3; i++) document.getElementById('card' + i).disabled = true;
+
+  // Show result on cards
+  for (let i = 0; i < 3; i++) {
+    const btn = document.getElementById('card' + i);
+    const mark = document.getElementById('mark' + i);
+    if (i === q.winnerIdx) {
+      btn.classList.add('winner');
+      mark.textContent = '✓';
+    } else if (i === idx && !correct) {
+      btn.classList.add('wrong');
+      mark.textContent = '✗';
+    }
+  }
+
+  // Update pip
+  const pip = document.getElementById('pip' + currentQ);
+  pip.className = 'pip ' + (correct ? 'correct' : 'wrong');
+
+  if (correct) {
+    lapCorrect++;
+    totalCorrect++;
+    shareEmoji.push('🏁');
+  } else {
+    lapPenalties += PENALTY_SECS;
+    shareEmoji.push('💀');
+    showPenalty();
+  }
+
+  // Move car
+  const pct = 5 + ((currentQ + 1) / QUESTIONS_PER_LAP) * 85;
+  document.getElementById('track-car').style.left = pct + '%';
+
+  // Next question or lap end
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < QUESTIONS_PER_LAP) {
+      loadQuestion();
+    } else {
+      endLap();
+    }
+  }, ANSWER_PAUSE);
+}
+
+function showPenalty() {
+  const el = document.getElementById('penalty-flash');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 600);
+}
+
+// ── LAP END ───────────────────────────────────────────────────────────────────
+function endLap() {
+  clearInterval(timerInterval);
+  const rawTime = lapElapsed + lapPenalties;
+  lapTimes.push(Math.round(rawTime * 10) / 10);
+  totalTime = lapTimes.reduce((a,b) => a+b, 0);
+
+  document.getElementById('lc-title').textContent = lapCorrect === 5 ? 'PERFECT LAP!' : 'LAP COMPLETE';
+  document.getElementById('lc-sub').textContent = `Lap ${currentLap} of ${TOTAL_LAPS}`;
+  document.getElementById('lc-header').style.background = lapCorrect === 5 ? '#1a6e2e' : lapCorrect >= 3 ? '#185FA5' : '#e8132a';
+  document.getElementById('lc-time').textContent = formatTime(rawTime);
+  document.getElementById('lc-correct').textContent = lapCorrect + '/5';
+  document.getElementById('lc-penalty').textContent = lapPenalties > 0 ? '+' + lapPenalties + 's' : 'None';
+  document.getElementById('lc-total').textContent = formatTime(totalTime);
+  document.getElementById('lc-pos').textContent = 'P—';
+  document.getElementById('lc-laps').textContent = currentLap + '/' + TOTAL_LAPS;
+
+  const nextBtn = document.getElementById('next-lap-btn');
+  if (currentLap >= TOTAL_LAPS) {
+    nextBtn.textContent = 'See Final Results';
+    nextBtn.onclick = finishRace;
+  } else {
+    nextBtn.textContent = 'Next Lap →';
+    nextBtn.onclick = nextLap;
+  }
+
+  document.getElementById('lap-complete-screen').classList.add('show');
+}
+
+function nextLap() {
+  document.getElementById('lap-complete-screen').classList.remove('show');
+  currentLap++;
+  document.getElementById('track-car').style.left = '5%';
+  startLap();
+}
+
+
+async function finishRace() {
+  document.getElementById('lap-complete-screen').classList.remove('show');
+  gameComplete = true;
+  document.getElementById('share-btn').classList.add('visible');
+  await saveScore();
+  await issueQualifyingCard();
+  showQualifyingResult(totalTime, true);
+}
+
+// ── QUALIFYING GATE + START ───────────────────────────────────────────────────
+async function startQualifying() {
+  let h = document.getElementById('handle-input').value.trim();
+  if (!h) { showToast('Enter your X handle to qualify'); return; }
+  if (!h.startsWith('@')) h = '@' + h;
+
+  // Gate: must have a Participation card
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_cards?handle=eq.${encodeURIComponent(h)}&card_type=eq.Participation`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }}
+    );
+    const cards = await res.json();
+    if (!cards.length) {
+      showToast('Complete a Practice session first to unlock Qualifying');
+      return;
+    }
+  } catch(e) { showToast('Connection error — try again'); return; }
+
+  // One shot: check for existing qualifying time for THIS race
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_scores?handle=eq.${encodeURIComponent(h)}&race=eq.${encodeURIComponent(RACE_NAME)}&limit=1`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }}
+    );
+    const existing = await res.json();
+    if (existing.length > 0) {
+      handle = h;
+      totalTime = existing[0].total_time;
+      gameComplete = true;
+      showToast('You have already qualified — your time stands');
+      document.getElementById('handle-screen').classList.remove('show');
+      shareEmoji = [];
+      totalCorrect = 0;
+      window._earnedCard = null;
+      showQualifyingResult(totalTime, false);
+      return;
+    }
+  } catch(e) {}
+
+  handle = h;
+  localStorage.setItem('apex_handle', handle);
+  document.getElementById('handle-screen').classList.remove('show');
+  questions = getDayQuestions();
+  currentLap = 1; currentQ = 0; totalCorrect = 0; totalTime = 0;
+  lapTimes = []; shareEmoji = []; gameComplete = false;
+  startLap();
+}
+
+// ── QUALIFYING CARD — per race ────────────────────────────────────────────────
+async function issueQualifyingCard() {
+  try {
+    const check = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_cards?handle=eq.${encodeURIComponent(handle)}&card_type=eq.Qualifying&race=eq.${encodeURIComponent(RACE_NAME)}`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }}
+    );
+    const existing = await check.json();
+    if (existing.length > 0) { window._earnedCard = null; return; }
+
+    const serial = `APEX·QUAL·${RACE_CODE}·S1·${new Date().getFullYear()}`;
+
+    await fetch(`${SUPABASE_URL}/rest/v1/apex_cards`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        handle, card_type: 'Qualifying', race: RACE_NAME, season: '2026 · S1',
+        time: Math.round(totalTime * 10) / 10, position: null,
+        correct: totalCorrect, serial
+      })
+    });
+    window._earnedCard = { cardType: 'Qualifying', serial };
+  } catch(e) { window._earnedCard = null; }
+}
+
+// ── QUALIFYING RESULTS ────────────────────────────────────────────────────────
+function showQualifyingResult(time, freshRun) {
+  const diff = PAR_TIME - time;
+  const beatPar = diff > 0;
+  const diffStr = Math.abs(diff).toFixed(1);
+  const headerBg = beatPar ? '#f59e0b' : '#555';
+  const gridMsg = beatPar
+    ? `Beat par by ${diffStr}s — you start the Race ${diffStr}s ahead`
+    : `Missed par by ${diffStr}s — you carry a ${diffStr}s deficit into the Race`;
+
+  localStorage.setItem('apex_quali_time', time.toFixed(1));
+  localStorage.setItem('apex_quali_advantage', diff.toFixed(1));
+
+  document.getElementById('res-title').textContent = 'QUALI COMPLETE';
+  document.getElementById('res-sub').textContent = `Qualifying · Silverstone · ${handle}`;
+  document.getElementById('res-header').style.background = headerBg;
+  document.getElementById('res-time').textContent = formatTime(time);
+  document.getElementById('res-pos').textContent = beatPar ? '▲' + diffStr + 's' : '▼' + diffStr + 's';
+  document.getElementById('res-correct').textContent = totalCorrect + '/5';
+  document.getElementById('pos-value').textContent = beatPar ? 'P+' : 'P-';
+
+  const emojiStr = shareEmoji.join('');
+  const shareText = `APEX · Qualifying · Silverstone\n${handle} · ${formatTime(time)}\n${beatPar ? '⚡ Beat par by ' + diffStr + 's' : '💀 Missed par by ' + diffStr + 's'}\n${emojiStr}\ncarcophony.github.io/apex`;
+  document.getElementById('sp-emoji').textContent = emojiStr;
+  document.getElementById('sp-text').textContent = `${formatTime(time)} · Par: ${formatTime(PAR_TIME)}\n${gridMsg}`;
+  document.getElementById('res-header').dataset.share = shareText;
+
+  const earned = window._earnedCard;
+  const cardEl = document.getElementById('earned-card-wrap');
+  if (earned && cardEl && freshRun) {
+    cardEl.innerHTML = `
+      <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.4);border-radius:8px;padding:12px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:28px;">⏱</div>
+        <div style="flex:1;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#f59e0b;margin-bottom:3px;">Card Earned</div>
+          <div style="font-size:16px;font-weight:900;color:#fff;">Qualifying Card · Silverstone</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:2px;">${earned.serial}</div>
+        </div>
+        <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;">Saved →</div>
+      </div>`;
+    cardEl.style.display = 'block';
+  } else if (cardEl) { cardEl.style.display = 'none'; }
+
+  fetchLeaderboard().then(lb => {
+    const lbEl = document.getElementById('lb-list');
+    if (!lb.length) { lbEl.innerHTML = '<div style="text-align:center;color:#555;font-size:13px;padding:12px;">First to qualify!</div>'; return; }
+    lbEl.innerHTML = lb.slice(0,10).map((row, i) => {
+      const isYou = row.handle === handle;
+      const gap = i === 0 ? 'Pole' : '+' + formatTime(row.total_time - lb[0].total_time);
+      return `<div class="lb-row${isYou?' you':''}">
+        <div class="lb-pos ${i<3?'p'+(i+1):''}">${i+1}</div>
+        <div class="lb-handle">${row.handle}${isYou?' ◀':''}</div>
+        <div class="lb-time">${formatTime(row.total_time)}</div>
+        <div class="lb-gap">${gap}</div>
+      </div>`;
+    }).join('');
+  });
+
+  const raceBtn = document.getElementById('race-btn');
+  if (raceBtn) {
+    raceBtn.textContent = freshRun ? 'Race Unlocked → Go Race' : 'Go to Race →';
+    raceBtn.style.display = 'block';
+  }
+
+  document.getElementById('results-screen').classList.add('show');
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function closeResults() { document.getElementById('results-screen').classList.remove('show'); }
+function goProfile() { window.location.href = '/apex/apex-profile.html'; }
+function goRace() { window.location.href = '/apex/apex-race.html'; }
+
+function copyShare() {
+  const text = document.getElementById('res-header').dataset.share;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => { closeResults(); showToast('Copied! Ready to share.'); });
+  } else showToast('Copy not available in this browser');
+}
+
+function formatTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return String(m).padStart(2,'0') + ':' + s.toFixed(1).padStart(4,'0');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function startCountdown() {
+  clearInterval(countdownInterval);
+  countdownInterval = setInterval(() => {
+    const now = new Date(), mid = new Date();
+    mid.setHours(24,0,0,0);
+    const ms = mid - now;
+    const h = Math.floor(ms/3600000), m = Math.floor((ms%3600000)/60000), s = Math.floor((ms%60000)/1000);
+    document.getElementById('cd-time').textContent =
+      String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }, 1000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+buildGrandstand();
+startCountdown();
+
+const saved = localStorage.getItem('apex_handle');
+if (saved) document.getElementById('handle-input').value = saved;
+
+document.getElementById('handle-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startQualifying();
+});
+</script>
+</body>
+</html>
