@@ -1082,6 +1082,150 @@ async function startRace() {
 const _origStartLap = typeof startLap !== 'undefined' ? startLap : null;
 
 // ── LAP END ───────────────────────────────────────────────────────────────────
+function startLap() {
+  lapElapsed = 0; lapPenalties = 0; lapCorrect = 0;
+  answered = false;
+  document.getElementById('lap-num').textContent = currentLap;
+  document.getElementById('venue-name').textContent = RACE_VENUE;
+  document.getElementById('lap-of').textContent = `Lap ${currentLap} of ${TOTAL_LAPS}`;
+  updatePips(-1);
+  currentQ = 0;
+  lapStartTime = performance.now();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 100);
+  loadQuestion();
+}
+
+function updateTimer() {
+  lapElapsed = (performance.now() - lapStartTime) / 1000;
+  const display = lapElapsed + lapPenalties;
+  const m = Math.floor(display / 60);
+  const s = display % 60;
+  document.getElementById('lap-timer').textContent =
+    String(m).padStart(2,'0') + ':' + s.toFixed(1).padStart(4,'0');
+}
+
+// ── QUESTION ──────────────────────────────────────────────────────────────────
+function loadQuestion() {
+  answered = false;
+  const qIdx = (currentLap - 1) * QUESTIONS_PER_LAP + currentQ;
+  const q = questions[qIdx];
+  if (!q) return;
+
+  updatePips(currentQ);
+
+  // Reset cards
+  for (let i = 0; i < 3; i++) {
+    const btn = document.getElementById('card' + i);
+    btn.className = 'helmet-btn c' + (i+1);
+    btn.disabled = true;
+    btn.style.opacity = '0';
+    btn.style.transform = 'translateY(10px)';
+    btn.style.transition = 'none';
+    document.getElementById('mark' + i).textContent = '✓';
+  }
+
+  document.getElementById('category-panel').classList.remove('visible');
+
+  // Flip cards one at a time
+  q.drivers.forEach((d, i) => {
+    drawHelmet(document.getElementById('helm' + i), d.helmet);
+    document.getElementById('flag' + i).textContent = d.flag;
+    document.getElementById('name' + i).textContent = d.name;
+    document.getElementById('team' + i).textContent = d.team;
+
+    setTimeout(() => {
+      const btn = document.getElementById('card' + i);
+      btn.style.transition = 'opacity 0.35s, transform 0.35s cubic-bezier(0.34,1.2,0.64,1)';
+      btn.style.opacity = '1';
+      btn.style.transform = 'translateY(0)';
+    }, i * 250);
+  });
+
+  // Category drops after all cards
+  setTimeout(() => {
+    document.getElementById('cat-value').textContent = q.cat.label.toUpperCase();
+    document.getElementById('category-panel').classList.add('visible');
+    // Enable buttons
+    for (let i = 0; i < 3; i++) {
+      document.getElementById('card' + i).disabled = false;
+    }
+    lapStartTime = lapStartTime; // timer continues
+  }, 900);
+}
+
+function updatePips(activeQ) {
+  for (let i = 0; i < 5; i++) {
+    const pip = document.getElementById('pip' + i);
+    pip.className = 'pip';
+    if (i < currentQ) {
+      // already answered — but we set in answer()
+    }
+    if (i === activeQ) pip.classList.add('active');
+  }
+}
+
+// ── ANSWER ────────────────────────────────────────────────────────────────────
+function answer(idx) {
+  if (answered) return;
+  answered = true;
+
+  const qIdx = (currentLap - 1) * QUESTIONS_PER_LAP + currentQ;
+  const q = questions[qIdx];
+  const correct = idx === q.winnerIdx;
+
+  // Disable all
+  for (let i = 0; i < 3; i++) document.getElementById('card' + i).disabled = true;
+
+  // Show result on cards
+  for (let i = 0; i < 3; i++) {
+    const btn = document.getElementById('card' + i);
+    const mark = document.getElementById('mark' + i);
+    if (i === q.winnerIdx) {
+      btn.classList.add('winner');
+      mark.textContent = '✓';
+    } else if (i === idx && !correct) {
+      btn.classList.add('wrong');
+      mark.textContent = '✗';
+    }
+  }
+
+  // Update pip
+  const pip = document.getElementById('pip' + currentQ);
+  pip.className = 'pip ' + (correct ? 'correct' : 'wrong');
+
+  if (correct) {
+    lapCorrect++;
+    totalCorrect++;
+    shareEmoji.push('🏁');
+  } else {
+    lapPenalties += PENALTY_SECS;
+    shareEmoji.push('💀');
+    showPenalty();
+  }
+
+  // Move car
+  const pct = 5 + ((currentQ + 1) / QUESTIONS_PER_LAP) * 85;
+  document.getElementById('track-car').style.left = pct + '%';
+
+  // Next question or lap end
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < QUESTIONS_PER_LAP) {
+      loadQuestion();
+    } else {
+      endLap();
+    }
+  }, ANSWER_PAUSE);
+}
+
+function showPenalty() {
+  const el = document.getElementById('penalty-flash');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 600);
+}
+
+
 function endLap() {
   clearInterval(timerInterval);
   const rawTime = lapElapsed + lapPenalties;
