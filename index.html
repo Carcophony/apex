@@ -485,6 +485,7 @@ html, body {
       <div id="lb-list"></div>
       <div class="btn-row" style="grid-template-columns:1fr;gap:8px;">
         <button class="screen-btn" onclick="copyShare()">Copy &amp; Share</button>
+        <button class="screen-btn" id="qualifying-btn" style="display:none;background:#c9a84c;color:#000;" onclick="goQualifying()">Qualifying Unlocked → Go Qualify</button>
         <button class="screen-btn dark" onclick="goProfile()">My Profile →</button>
         <button class="screen-btn dark" onclick="closeResults()">Close</button>
       </div>
@@ -1155,29 +1156,27 @@ async function finishRace() {
 // ── CARD ISSUANCE ─────────────────────────────────────────────────────────────
 async function issueCard(position) {
   try {
-    // Decide card type
-    let cardType;
-    if (position === 1) cardType = 'Winner';
-    else if (position <= 3) cardType = 'Podium';
-    else cardType = 'Participation';
+    // Practice only ever issues a Participation card — first time only
+    // Winner and Podium cards are Race rewards only
+    const cardType = 'Participation';
 
-    // Check if player already has this card type for this race
+    // Check if player already has a Participation card — only issue once ever
     const check = await fetch(
-      `${SUPABASE_URL}/rest/v1/apex_cards?handle=eq.${encodeURIComponent(handle)}&race=eq.${encodeURIComponent(RACE_NAME)}&card_type=eq.${encodeURIComponent(cardType)}`,
+      `${SUPABASE_URL}/rest/v1/apex_cards?handle=eq.${encodeURIComponent(handle)}&card_type=eq.Participation`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }}
     );
     const existing = await check.json();
+    if (existing.length > 0) {
+      // Already have one — no new card, but still show the qualifying prompt
+      window._earnedCard = null;
+      window._hasParticipation = true;
+      return;
+    }
 
-    // Only issue if they don't already have this card type for this race
-    // Exception: Winner card always re-issues if they beat their own time
-    if (existing.length > 0 && cardType !== 'Winner') return;
+    // Generate serial
+    const serial = `APEX·PRAC·S1·${new Date().getFullYear()}·001`;
 
-    // Generate serial number — APEX·BGP·S1·2026·001 format
-    const raceCode = RACE_NAME.split(' ').map(w => w[0]).join('').toUpperCase();
-    const dateCode = new Date().getFullYear();
-    const serial = `APEX·${raceCode}·S1·${dateCode}·${String(position).padStart(3,'0')}`;
-
-    // Save card to Supabase
+    // Save to Supabase
     await fetch(`${SUPABASE_URL}/rest/v1/apex_cards`, {
       method: 'POST',
       headers: {
@@ -1192,17 +1191,18 @@ async function issueCard(position) {
         race: RACE_NAME,
         season: '2026 · S1',
         time: Math.round(totalTime * 10) / 10,
-        position,
+        position: null,
         correct: totalCorrect,
         serial
       })
     });
 
-    // Store for display on results screen
-    window._earnedCard = { cardType, serial, position };
+    window._earnedCard = { cardType, serial, position: null };
+    window._hasParticipation = true;
 
   } catch(e) {
     window._earnedCard = null;
+    window._hasParticipation = false;
   }
 }
 
@@ -1252,7 +1252,17 @@ async function showResults() {
   document.getElementById('sp-text').textContent = `${posLabel} · ${formatTime(totalTime)}${pbLine}\n${totalCorrect}/${TOTAL_LAPS*QUESTIONS_PER_LAP} correct`;
   document.getElementById('res-header').dataset.share = shareText;
 
-  // ── EARNED CARD DISPLAY ──
+  // Show qualifying signpost if they have or just earned participation card
+  const qualBtn = document.getElementById('qualifying-btn');
+  if (qualBtn) {
+    if (window._earnedCard && window._earnedCard.cardType === 'Participation') {
+      qualBtn.textContent = 'Qualifying Unlocked → Go Qualify';
+      qualBtn.style.display = 'block';
+    } else if (window._hasParticipation) {
+      qualBtn.textContent = 'Go to Qualifying →';
+      qualBtn.style.display = 'block';
+    }
+  }
   const earned = window._earnedCard;
   const cardEl = document.getElementById('earned-card-wrap');
   if (earned && cardEl) {
@@ -1301,6 +1311,8 @@ async function showResults() {
 function closeResults() { document.getElementById('results-screen').classList.remove('show'); }
 
 function goProfile() { window.location.href = '/apex/apex-profile.html'; }
+
+function goQualifying() { window.location.href = '/apex/apex-qualifying.html'; }
 
 function copyShare() {
   const text = document.getElementById('res-header').dataset.share;
