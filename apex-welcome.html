@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX — Welcome to the Grid</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080909;
+  --gold: #f5c842;
+  --gold2: #c9a84c;
+  --gold3: #8a6d1e;
+  --red: #e8132a;
+  --white: #ffffff;
+  --ink: rgba(255,255,255,0.45);
+  --ink2: rgba(255,255,255,0.2);
+  --border: #1e2128;
+// }
+
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: 24px 16px;
+// }
+
+/* Carbon weave */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    repeating-linear-gradient(45deg,  rgba(255,255,255,0.014) 0, rgba(255,255,255,0.014) 1px, transparent 1px, transparent 10px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.014) 0, rgba(255,255,255,0.014) 1px, transparent 1px, transparent 10px);
+  pointer-events: none;
+// }
+
+/* Subtle red glow top, gold glow bottom */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 30% at 50% 0%, rgba(232,19,42,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 20% at 50% 100%, rgba(245,200,66,0.06) 0%, transparent 70%);
+  pointer-events: none;
+// }
+
+/* ── CARD ── */
+.welcome-card {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: linear-gradient(160deg, #141618 0%, #0c0d0f 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(245,200,66,0.2),
+    0 0 0 3px #0c0d0f,
+    0 0 0 4px rgba(245,200,66,0.08),
+    0 32px 80px rgba(0,0,0,0.95);
+  animation: cardIn 0.7s cubic-bezier(0.34,1.1,0.64,1) both;
+// }
+
+@keyframes cardIn {
+  from { opacity:0; transform: translateY(32px) scale(0.95); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+// }
+
+/* Top red stripe */
+.top-stripe {
+  height: 5px;
+  background: linear-gradient(90deg, #b0001a, var(--red), #ff3d55, var(--red), #b0001a);
+// }
+
+/* Chequered bottom strip */
+.bottom-checker {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--gold3) 0, var(--gold3) 8px, transparent 8px, transparent 16px);
+  opacity: 0.6;
+// }
+
+/* Inner gold border */
+.inner-border {
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(245,200,66,0.12);
+  border-radius: 10px;
+  pointer-events: none;
+// }
+
+/* Gold glow behind logo */
+.logo-glow {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 320px; height: 200px;
+  background: radial-gradient(ellipse, rgba(245,200,66,0.07) 0%, transparent 70%);
+  pointer-events: none;
+// }
+
+/* ── CONTENT ── */
+.card-content {
+  position: relative;
+  z-index: 2;
+  padding: 36px 32px 32px;
+// }
+
+/* Logo */
+.logo-wrap {
+  text-align: center;
+  margin-bottom: 6px;
+  animation: fadeUp 0.5s 0.2s ease both;
+// }
+.logo {
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--white);
+  line-height: 1;
+// }
+.logo em { color: var(--red); font-style: normal; }
+
+.logo-sub {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold2);
+  text-align: center;
+  margin-bottom: 28px;
+  animation: fadeUp 0.5s 0.3s ease both;
+// }
+
+/* Gold rule */
+.rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold2), transparent);
+  margin-bottom: 28px;
+  animation: fadeUp 0.5s 0.35s ease both;
+// }
+
+/* ── BRIEFING LINES ── */
+.briefing {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 28px;
+// }
+
+.briefing-line {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  animation: fadeUp 0.45s ease both;
+// }
+.briefing-line.hero-line {
+  background: rgba(245,200,66,0.03);
+  border-radius: 4px;
+  padding: 11px 8px;
+  border-bottom: none;
+  margin: 4px 0;
+// }
+.briefing-line.hero-line .line-text {
+  color: rgba(255,255,255,0.88);
+// }
+
+.line-num {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--gold3);
+  letter-spacing: 0.1em;
+  flex-shrink: 0;
+  width: 16px;
+  text-align: right;
+  padding-top: 1px;
+// }
+
+.line-text {
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.72);
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+// }
+
+.line-text strong {
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: 0.04em;
+  font-size: 15px;
+// }
+
+.line-text em {
+  font-style: normal;
+  color: var(--gold);
+  font-weight: 700;
+// }
+
+/* Staggered animation delays */
+.briefing-line:nth-child(1) { animation-delay: 0.4s; }
+.briefing-line:nth-child(2) { animation-delay: 0.5s; }
+.briefing-line:nth-child(3) { animation-delay: 0.6s; }
+.briefing-line:nth-child(4) { animation-delay: 0.7s; }
+.briefing-line:nth-child(5) { animation-delay: 0.75s; }
+.briefing-line:nth-child(6) { animation-delay: 0.8s; }
+.briefing-line:nth-child(7) { animation-delay: 0.85s; }
+
+/* ── PYRAMID ── */
+.pyramid-wrap {
+  margin-bottom: 28px;
+  animation: fadeUp 0.5s 0.9s ease both;
+// }
+
+.pyramid-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold2);
+  text-align: center;
+  margin-bottom: 12px;
+// }
+
+.pyramid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+// }
+
+.pyramid-tier {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 7px 16px;
+  background: rgba(0,0,0,0.3);
+  transition: border-color 0.2s;
+// }
+
+.pyramid-tier:nth-child(1) { width: 100%; border-color: rgba(245,200,66,0.3); }
+.pyramid-tier:nth-child(2) { width: 84%; border-color: rgba(245,200,66,0.2); }
+.pyramid-tier:nth-child(3) { width: 68%; border-color: rgba(245,200,66,0.12); }
+.pyramid-tier:nth-child(4) { width: 52%; border-color: rgba(245,200,66,0.06); }
+
+.tier-icon { font-size: 14px; }
+.tier-name {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white);
+// }
+.tier-name.top { color: var(--gold); }
+.tier-arrow {
+  font-size: 10px;
+  color: var(--ink2);
+  align-self: center;
+  margin: -2px 0;
+// }
+
+/* ── BUTTONS ── */
+.btn-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeUp 0.5s 1s ease both;
+// }
+
+.btn-start {
+  width: 100%;
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 16px;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+// }
+.btn-start:hover { background: #ff1f38; }
+.btn-start:active { transform: scale(0.98); }
+
+.btn-profile {
+  width: 100%;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+// }
+.btn-profile:hover { border-color: var(--gold3); color: var(--gold2); }
+
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(10px); }
+  to   { opacity:1; transform: translateY(0); }
+// }
+</style>
+</head>
+<body>
+
+<div class="welcome-card">
+  <div class="top-stripe"></div>
+  <div class="bottom-checker"></div>
+  <div class="inner-border"></div>
+  <div class="logo-glow"></div>
+
+  <div class="card-content">
+
+    <div class="logo-wrap">
+      <div class="logo">AP<em>EX</em></div>
+    </div>
+    <div class="logo-sub">The F1 Knowledge Race</div>
+
+    <div class="rule"></div>
+
+    <div class="briefing">
+      <div class="briefing-line">
+        <span class="line-num">01</span>
+        <span class="line-text"><strong>Three cards. One stat to beat.</strong> Pick the winner. Beat the clock.</span>
+      </div>
+      <div class="briefing-line">
+        <span class="line-num">02</span>
+        <span class="line-text"><strong>Five laps. Five questions per lap.</strong> Your time goes on the board.</span>
+      </div>
+      <div class="briefing-line">
+        <span class="line-num">03</span>
+        <span class="line-text">Wrong answer — <em>ten second penalty.</em> Right answer — keep moving.</span>
+      </div>
+      <div class="briefing-line hero-line">
+        <span class="line-num">04</span>
+        <span class="line-text"><strong>Qualifying. Racing. Championship.</strong> Every round is a race against the clock — and everyone else on the grid.</span>
+      </div>
+      <div class="briefing-line">
+        <span class="line-num">05</span>
+        <span class="line-text">Win cards, podium cards, fastest lap cards. <em>Earned, never bought.</em> All live on your Profile, free to download and trade.</span>
+      </div>
+      <div class="briefing-line">
+        <span class="line-num">06</span>
+        <span class="line-text">Your handle is your <strong>driver name.</strong> Your time is your reputation.</span>
+      </div>
+      <div class="briefing-line hero-line">
+        <span class="line-num">07</span>
+        <span class="line-text"><em>One winner. One Championship. One Leaderboard.</em> The leaderboard and the clock never lie.</span>
+      </div>
+    </div>
+
+    <!-- PYRAMID -->
+    <div class="pyramid-wrap">
+      <div class="pyramid-label">The Pyramid</div>
+      <div class="pyramid">
+        <div class="pyramid-tier">
+          <span class="tier-icon">👑</span>
+          <span class="tier-name top">World Championship</span>
+        </div>
+        <div class="tier-arrow">▲</div>
+        <div class="pyramid-tier">
+          <span class="tier-icon">🏆</span>
+          <span class="tier-name">Championship</span>
+        </div>
+        <div class="tier-arrow">▲</div>
+        <div class="pyramid-tier">
+          <span class="tier-icon">🏁</span>
+          <span class="tier-name">Race</span>
+        </div>
+        <div class="tier-arrow">▲</div>
+        <div class="pyramid-tier">
+          <span class="tier-icon">⏱</span>
+          <span class="tier-name">Qualifying</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-wrap">
+      <button class="btn-start" onclick="goRace()">Start Engines</button>
+      <button class="btn-profile" onclick="goProfile()">My Profile →</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Show welcome screen only once per player
+// After first visit, go straight to game
+function goRace() {
+  localStorage.setItem('apex_welcomed', '1');
+//   window.location.href = '/apex/index.html';
+// }
+
+function goProfile() {
+  localStorage.setItem('apex_welcomed', '1');
+  window.location.href = '/apex/apex-profile.html';
+// }
+
+// If returning player, redirect to game directly
+// Comment this out if you want welcome screen every time for testing
+// const welcomed = localStorage.getItem('apex_welcomed');
+// const handle   = localStorage.getItem('apex_handle');
+// if (welcomed && handle) {
+//   window.location.href = '/apex/index.html';
+// }
+</script>
+</body>
+</html>
