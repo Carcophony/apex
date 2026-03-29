@@ -928,17 +928,6 @@ async function fetchLeaderboard() {
   } catch(e) { return []; }
 }
 
-// ── GAME STATE ────────────────────────────────────────────────────────────────
-let handle = '', rng;
-let currentLap = 1, currentQ = 0;
-let lapStartTime, lapElapsed = 0, lapPenalties = 0;
-let lapCorrect = 0, totalCorrect = 0;
-let lapTimes = [], totalTime = 0;
-let timerInterval, countdownInterval;
-let questions = [], answered = false;
-let gameComplete = false;
-let shareEmoji = [];
-
 function getDayQuestions() {
   rng = makeMulberry32(getDailySeed());
   const allQ = [];
