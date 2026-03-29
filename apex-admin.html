@@ -416,7 +416,7 @@ function renderRaces(races) {
       ? `<button class="btn-sm amber" onclick="updateStatus(${r.id}, 'closed')">Close Race</button>`
       : status === 'scheduled'
       ? `<button class="btn-sm green" onclick="updateStatus(${r.id}, 'live')">Force Open</button>`
-      : '';
+      : `<button class="btn-sm red" onclick="runCeremony('${r.race_name}')">🏆 Run Ceremony</button>`;
 
     return `<div class="race-card ${status}">
       <div class="race-card-header">
@@ -442,6 +442,7 @@ function renderRaces(races) {
       </div>
       <div class="race-card-footer">
         ${statusButtons}
+        ${status === 'live' ? `<button class="btn-sm ghost" onclick="viewLeaderboard()">View Leaderboard</button>` : ''}
         <button class="btn-sm ghost" onclick="deleteRace(${r.id}, '${r.race_name}')">Delete</button>
       </div>
     </div>`;
@@ -517,7 +518,16 @@ async function updateStatus(id, status) {
   } catch(e) { showToast('Update failed', false); }
 }
 
-// ── DELETE RACE ───────────────────────────────────────────────────────────────
+// ── RUN CEREMONY ─────────────────────────────────────────────────────────────
+function runCeremony(raceName) {
+  if (!confirm(`Run the ceremony for "${raceName}"?\n\nThis will:\n• Award points to all finishers\n• Issue Winner and Podium cards\n• Open the ceremony page\n\nOnly do this once after the race has fully closed.`)) return;
+  window.open('/apex/apex-ceremony.html', '_blank');
+}
+
+// ── VIEW LEADERBOARD ──────────────────────────────────────────────────────────
+function viewLeaderboard() {
+  window.open('/apex/apex-leaderboard.html', '_blank');
+}
 async function deleteRace(id, name) {
   if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
   try {
