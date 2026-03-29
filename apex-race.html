@@ -433,11 +433,11 @@ html, body {
       <div class="screen-sub" id="race-sub">British Grand Prix · Silverstone</div>
     </div>
     <div class="screen-body">
-      <div id="race-status-box" style="background:rgba(232,19,42,0.08);border:1px solid rgba(232,19,42,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">
-        <p style="font-size:12px;color:#e8132a;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;" id="race-status-label">Checking race status...</p>
-        <p style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6;" id="race-status-desc">Loading race information.</p>
+      <div id="race-status-box" style="background:rgba(255,255,255,0.04);border:1px solid #2a2d34;border-radius:8px;padding:12px;margin-bottom:12px;">
+        <p style="font-size:12px;color:#888;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;" id="race-status-label">Loading race information...</p>
+        <p style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;" id="race-status-desc">Please wait.</p>
       </div>
-      <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.5;">Enter your X handle to race. You need a Qualifying card for this race.</p>
+      <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.5;">Enter your X handle. You must have completed Qualifying to enter the Race.</p>
       <input class="screen-input" id="handle-input" type="text" placeholder="@yourhandle" maxlength="30" />
       <button class="screen-btn" id="start-race-btn" onclick="startRace()">Start Engines</button>
       <button class="screen-btn dark" style="margin-top:8px;" onclick="goProfile()">My Profile →</button>
@@ -1290,14 +1290,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (statusEl) { statusEl.textContent = '🟢 Race is LIVE'; statusEl.style.color = '#22c55e'; }
       if (descEl)   descEl.textContent = `Window closes ${fmt(close)}. Your qualifying time is your head start.`;
       if (btn)      { btn.textContent = 'Start Engines'; btn.disabled = false; }
+      document.getElementById('race-status-box').style.cssText = 'background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:12px;margin-bottom:12px;';
     } else if (status === 'scheduled') {
       if (statusEl) { statusEl.textContent = '⏳ Race Not Open Yet'; statusEl.style.color = '#f59e0b'; }
-      if (descEl)   descEl.textContent = `Race opens ${fmt(open)}. Come back then.`;
+      if (descEl)   descEl.textContent = `Race opens ${fmt(open)}. Come back then to race.`;
       if (btn)      { btn.textContent = 'Race Not Open Yet'; btn.disabled = true; btn.style.opacity = '0.4'; }
+      document.getElementById('race-status-box').style.cssText = 'background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px;margin-bottom:12px;';
     } else {
       if (statusEl) { statusEl.textContent = '🏁 Race Window Closed'; statusEl.style.color = '#888'; }
       if (descEl)   descEl.textContent = `This race closed ${fmt(close)}. Watch for the next race.`;
       if (btn)      { btn.textContent = 'Race Closed'; btn.disabled = true; btn.style.opacity = '0.4'; }
+      document.getElementById('race-status-box').style.cssText = 'background:rgba(255,255,255,0.03);border:1px solid #2a2d34;border-radius:8px;padding:12px;margin-bottom:12px;';
     }
   }
 });
