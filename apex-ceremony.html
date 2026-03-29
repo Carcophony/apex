@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX — Race Ceremony</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080909;
+  --bg2: #0e0f11;
+  --bg3: #13151a;
+  --border: #222529;
+  --gold: #f5c842;
+  --gold2: #c9a84c;
+  --gold3: #8a6d1e;
+  --red: #e8132a;
+  --green: #22c55e;
+  --silver: #aaaaaa;
+  --bronze: #cd7f32;
+  --white: #ffffff;
+  --ink: rgba(255,255,255,0.5);
+  --ink2: rgba(255,255,255,0.25);
+}
+
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--white);
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    repeating-linear-gradient(45deg,  rgba(255,255,255,0.012) 0, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 10px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.012) 0, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 10px);
+  pointer-events: none;
+}
+
+/* ── CONFETTI ── */
+.confetti-piece {
+  position: fixed;
+  width: 10px; height: 10px;
+  top: -20px;
+  animation: confettiFall linear forwards;
+  z-index: 200;
+  pointer-events: none;
+  border-radius: 2px;
+}
+@keyframes confettiFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── HEADER ── */
+.site-header {
+  position: relative; z-index: 10;
+  background: var(--bg2);
+  border-bottom: 3px solid var(--red);
+  padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px;
+}
+.logo { font-size: 24px; font-weight: 900; letter-spacing: 0.15em; color: var(--white); }
+.logo em { color: var(--red); font-style: normal; }
+.race-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--gold2);
+}
+
+/* ── HERO ── */
+.ceremony-hero {
+  text-align: center;
+  padding: 48px 24px 32px;
+  position: relative; z-index: 5;
+}
+.ceremony-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--gold2);
+  margin-bottom: 10px; display: block;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+.ceremony-title {
+  font-size: 52px; font-weight: 900; letter-spacing: 0.04em;
+  color: var(--white); line-height: 1;
+  animation: fadeUp 0.6s 0.3s ease both;
+}
+.ceremony-title em { color: var(--red); font-style: normal; }
+.ceremony-sub {
+  font-size: 14px; color: var(--ink); letter-spacing: 0.1em;
+  margin-top: 8px; text-transform: uppercase;
+  animation: fadeUp 0.6s 0.4s ease both;
+}
+.gold-rule {
+  width: 200px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold2), transparent);
+  margin: 24px auto;
+  animation: fadeUp 0.6s 0.5s ease both;
+}
+
+/* ── PODIUM ── */
+.podium-wrap {
+  max-width: 600px; margin: 0 auto;
+  padding: 0 24px 40px;
+  position: relative; z-index: 5;
+}
+
+.podium-positions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+/* P2 left, P1 centre elevated, P3 right */
+.podium-slot {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.34,1.2,0.64,1);
+}
+.podium-slot.reveal {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.podium-card {
+  width: 100%;
+  border-radius: 10px;
+  padding: 16px 12px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+.podium-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+}
+
+.p1 .podium-card { background: linear-gradient(160deg, #1e1c14, #0e0d09); border: 2px solid var(--gold2); }
+.p1 .podium-card::before { background: linear-gradient(90deg, var(--gold3), var(--gold), var(--gold3)); }
+.p2 .podium-card { background: var(--bg2); border: 1px solid #666; }
+.p2 .podium-card::before { background: var(--silver); }
+.p3 .podium-card { background: var(--bg2); border: 1px solid #8B5E3C; }
+.p3 .podium-card::before { background: var(--bronze); }
+
+.podium-position-num {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.p1 .podium-position-num { color: var(--gold); }
+.p2 .podium-position-num { color: var(--silver); }
+.p3 .podium-position-num { color: var(--bronze); }
+
+.podium-trophy { font-size: 32px; margin-bottom: 8px; line-height: 1; }
+
+.podium-handle {
+  font-size: 18px; font-weight: 900; color: var(--white);
+  letter-spacing: 0.02em; line-height: 1.1;
+  word-break: break-all; margin-bottom: 6px;
+}
+.p1 .podium-handle { font-size: 22px; color: var(--gold); }
+
+.podium-time {
+  font-size: 16px; font-weight: 900; letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.p1 .podium-time { color: var(--gold); font-size: 20px; }
+.p2 .podium-time { color: var(--silver); }
+.p3 .podium-time { color: var(--bronze); }
+
+.podium-correct {
+  font-size: 9px; color: var(--ink2); letter-spacing: 0.1em;
+  text-transform: uppercase; font-family: Arial, sans-serif;
+}
+
+.podium-points {
+  margin-top: 8px;
+  display: inline-block;
+  padding: 3px 10px; border-radius: 12px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+}
+.p1 .podium-points { background: rgba(245,200,66,0.15); color: var(--gold); }
+.p2 .podium-points { background: rgba(170,170,170,0.1); color: var(--silver); }
+.p3 .podium-points { background: rgba(205,127,50,0.1); color: var(--bronze); }
+
+/* Podium blocks underneath */
+.podium-block {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 900; color: rgba(255,255,255,0.15);
+  border-radius: 0 0 6px 6px;
+}
+.p1 .podium-block { height: 80px; background: linear-gradient(160deg, #1e1c14, #0e0d09); border: 2px solid var(--gold3); border-top: none; }
+.p2 .podium-block { height: 54px; background: var(--bg3); border: 1px solid #444; border-top: none; }
+.p3 .podium-block { height: 36px; background: var(--bg3); border: 1px solid #5a3e2a; border-top: none; }
+
+/* ── FASTEST LAP ── */
+.fastest-lap {
+  max-width: 600px; margin: 0 auto 32px;
+  padding: 0 24px;
+  position: relative; z-index: 5;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fastest-lap.reveal { opacity: 1; transform: translateY(0); }
+.fl-card {
+  background: var(--bg2);
+  border: 1px solid rgba(139,92,246,0.4);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.fl-icon { font-size: 24px; }
+.fl-body { flex: 1; }
+.fl-label { font-size: 8px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(139,92,246,0.8); margin-bottom: 3px; }
+.fl-handle { font-size: 16px; font-weight: 900; color: var(--white); letter-spacing: 0.04em; }
+.fl-time { font-size: 12px; color: var(--ink); letter-spacing: 0.06em; font-family: Arial, sans-serif; }
+.fl-points { font-size: 13px; font-weight: 900; color: rgba(139,92,246,0.9); }
+
+/* ── FULL LEADERBOARD ── */
+.lb-section {
+  max-width: 600px; margin: 0 auto 40px;
+  padding: 0 24px;
+  position: relative; z-index: 5;
+  opacity: 0; transition: opacity 0.6s 2s ease;
+}
+.lb-section.reveal { opacity: 1; }
+.section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
+.section-rule { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(245,200,66,0.2), transparent); }
+
+.lb-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 6px;
+  margin-bottom: 3px; background: var(--bg2);
+  border: 1px solid transparent;
+}
+.lb-row.you { border-color: var(--gold2); background: rgba(245,200,66,0.04); }
+.lb-pos { font-size: 14px; font-weight: 900; color: var(--ink2); width: 26px; }
+.lb-pos.p1 { color: var(--gold); }
+.lb-pos.p2 { color: var(--silver); }
+.lb-pos.p3 { color: var(--bronze); }
+.lb-handle { flex: 1; font-size: 13px; font-weight: 700; color: var(--white); letter-spacing: 0.04em; }
+.lb-time { font-size: 13px; font-weight: 700; color: var(--white); font-family: Impact, sans-serif; }
+.lb-pts { font-size: 12px; font-weight: 900; color: var(--gold2); min-width: 40px; text-align: right; }
+.lb-gap { font-size: 10px; color: var(--ink2); min-width: 50px; text-align: right; font-family: Arial, sans-serif; }
+
+/* ── SHARE SECTION ── */
+.share-section {
+  max-width: 600px; margin: 0 auto 40px;
+  padding: 0 24px;
+  position: relative; z-index: 5;
+  opacity: 0; transition: opacity 0.6s 2.5s ease;
+  text-align: center;
+}
+.share-section.reveal { opacity: 1; }
+.btn-share {
+  background: var(--red); color: white; border: none;
+  border-radius: 8px; padding: 14px 32px; cursor: pointer;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 16px; font-weight: 900; letter-spacing: 0.1em;
+  text-transform: uppercase; margin-bottom: 10px;
+  display: inline-block; transition: background 0.15s;
+}
+.btn-share:hover { background: #ff1f38; }
+.btn-profile {
+  background: transparent; color: var(--ink); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 24px; cursor: pointer;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 13px; font-weight: 900; letter-spacing: 0.1em;
+  text-transform: uppercase; display: inline-block;
+  margin-left: 8px; transition: all 0.15s;
+}
+.btn-profile:hover { border-color: var(--gold3); color: var(--gold2); }
+
+/* ── LOADING / WAITING ── */
+.loading-screen {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 60vh; gap: 16px;
+  position: relative; z-index: 5;
+}
+.loading-title { font-size: 18px; font-weight: 900; letter-spacing: 0.1em; color: var(--ink); text-transform: uppercase; }
+.loading-sub { font-size: 12px; color: var(--ink2); font-family: Arial, sans-serif; text-align: center; max-width: 300px; line-height: 1.6; }
+
+@keyframes fadeUp {
+  from { opacity:0; transform: translateY(12px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">AP<em>EX</em></div>
+  <div class="race-badge" id="race-badge">British Grand Prix · Ceremony</div>
+</header>
+
+<div id="loading-screen" class="loading-screen">
+  <div style="font-size:48px;">🏁</div>
+  <div class="loading-title">Loading Ceremony...</div>
+  <div class="loading-sub">Fetching final results from Supabase.</div>
+</div>
+
+<div id="ceremony-content" style="display:none;">
+
+  <div class="ceremony-hero">
+    <span class="ceremony-label">Official Results</span>
+    <div class="ceremony-title">BRIT<em>ISH</em> GRAND PRIX</div>
+    <div class="ceremony-sub" id="ceremony-sub">Silverstone · Season 2026 · S1</div>
+    <div class="gold-rule"></div>
+  </div>
+
+  <!-- PODIUM -->
+  <div class="podium-wrap">
+    <div class="podium-positions">
+      <!-- P2 left -->
+      <div class="podium-slot p2" id="slot-p2">
+        <div class="podium-card">
+          <div class="podium-position-num">P2</div>
+          <div class="podium-trophy">🥈</div>
+          <div class="podium-handle" id="p2-handle">—</div>
+          <div class="podium-time" id="p2-time">—</div>
+          <div class="podium-correct" id="p2-correct"></div>
+          <div class="podium-points" id="p2-points">85 pts</div>
+        </div>
+        <div class="podium-block">2</div>
+      </div>
+      <!-- P1 centre -->
+      <div class="podium-slot p1" id="slot-p1">
+        <div class="podium-card">
+          <div class="podium-position-num">P1 · RACE WINNER</div>
+          <div class="podium-trophy">🏆</div>
+          <div class="podium-handle" id="p1-handle">—</div>
+          <div class="podium-time" id="p1-time">—</div>
+          <div class="podium-correct" id="p1-correct"></div>
+          <div class="podium-points" id="p1-points">100 pts</div>
+        </div>
+        <div class="podium-block">1</div>
+      </div>
+      <!-- P3 right -->
+      <div class="podium-slot p3" id="slot-p3">
+        <div class="podium-card">
+          <div class="podium-position-num">P3</div>
+          <div class="podium-trophy">🥉</div>
+          <div class="podium-handle" id="p3-handle">—</div>
+          <div class="podium-time" id="p3-time">—</div>
+          <div class="podium-correct" id="p3-correct"></div>
+          <div class="podium-points" id="p3-points">72 pts</div>
+        </div>
+        <div class="podium-block">3</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASTEST LAP -->
+  <div class="fastest-lap" id="fastest-lap-section">
+    <div class="fl-card">
+      <div class="fl-icon">⚡</div>
+      <div class="fl-body">
+        <div class="fl-label">Fastest Lap · 5 Bonus Points</div>
+        <div class="fl-handle" id="fl-handle">—</div>
+        <div class="fl-time" id="fl-time">—</div>
+      </div>
+      <div class="fl-points">+5 pts</div>
+    </div>
+  </div>
+
+  <!-- FULL RESULTS -->
+  <div class="lb-section" id="lb-section">
+    <div class="section-head">
+      <div class="section-title">Full Classification</div>
+      <div class="section-rule"></div>
+    </div>
+    <div id="lb-list"></div>
+  </div>
+
+  <!-- SHARE -->
+  <div class="share-section" id="share-section">
+    <button class="btn-share" onclick="shareResults()">Share Results to X</button>
+    <button class="btn-profile" onclick="window.location.href='/apex/apex-profile.html'">My Profile →</button>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = 'https://eluwjbndjlscixjytrzx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_xOJRXt2dGCXovTNgDOSOJw_Shrbofuw';
+
+// Points system
+function calcPoints(position) {
+  if (position === 1)  return 100;
+  if (position === 2)  return 85;
+  if (position === 3)  return 72;
+  if (position === 4)  return 61;
+  if (position === 5)  return 52;
+  if (position === 6)  return 44;
+  if (position === 7)  return 37;
+  if (position === 8)  return 31;
+  if (position === 9)  return 26;
+  if (position === 10) return 22;
+  if (position <= 20)  return Math.max(10, 18 - (position - 11));
+  if (position <= 50)  return Math.max(4, 9 - Math.floor((position - 21) / 10));
+  if (position <= 100) return position <= 75 ? 3 : 2;
+  return 1;
+}
+
+function formatTime(secs) {
+  if (!secs) return '—';
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return String(m).padStart(2,'0') + ':' + s.toFixed(1).padStart(4,'0');
+}
+
+function showToast(msg) {
+  // simple alert fallback
+  console.log(msg);
+}
+
+// ── LOAD AND RUN CEREMONY ─────────────────────────────────────────────────────
+async function runCeremony() {
+  try {
+    // Load latest race config
+    const raceRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_races?order=open_time.desc&limit=1`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
+    );
+    const races = await raceRes.json();
+    if (!races.length) { showError('No race found'); return; }
+    const race = races[0];
+
+    // Update header
+    document.getElementById('race-badge').textContent = `${race.race_name} · Ceremony`;
+    document.querySelector('.ceremony-title').innerHTML = race.race_name.toUpperCase().replace(' GRAND PRIX', ' <em>GRAND PRIX</em>');
+    document.getElementById('ceremony-sub').textContent = `${race.circuit} · ${race.season}`;
+
+    // Load all scores for this race
+    const scoresRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_scores?race=eq.${encodeURIComponent(race.race_name)}&order=total_time.asc&limit=500`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
+    );
+    const allScores = await scoresRes.json();
+
+    // Best time per handle
+    const best = {};
+    allScores.forEach(r => {
+      if (!best[r.handle] || r.total_time < best[r.handle].total_time) best[r.handle] = r;
+    });
+    const lb = Object.values(best).sort((a,b) => a.total_time - b.total_time);
+
+    if (!lb.length) { showError('No race results found'); return; }
+
+    // Award points and save to apex_points
+    await awardPoints(lb, race);
+
+    // Show ceremony
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('ceremony-content').style.display = 'block';
+
+    // Populate podium with drama — P3 first, P2 second, P1 last
+    populatePodiumSlot('p3', lb[2], 3);
+    populatePodiumSlot('p2', lb[1], 2);
+    populatePodiumSlot('p1', lb[0], 1);
+
+    // Reveal P3 first
+    setTimeout(() => {
+      document.getElementById('slot-p3').classList.add('reveal');
+    }, 500);
+
+    // Then P2
+    setTimeout(() => {
+      document.getElementById('slot-p2').classList.add('reveal');
+    }, 1500);
+
+    // Then P1 with fanfare
+    setTimeout(() => {
+      document.getElementById('slot-p1').classList.add('reveal');
+      launchConfetti();
+    }, 3000);
+
+    // Fastest lap
+    setTimeout(() => {
+      showFastestLap(lb[0]);
+      document.getElementById('fastest-lap-section').classList.add('reveal');
+    }, 4000);
+
+    // Full leaderboard
+    setTimeout(() => {
+      renderLeaderboard(lb, race);
+      document.getElementById('lb-section').classList.add('reveal');
+    }, 4500);
+
+    // Share button
+    setTimeout(() => {
+      document.getElementById('share-section').classList.add('reveal');
+    }, 5000);
+
+    // Issue Winner and Podium cards
+    await issuePodiuCards(lb, race);
+
+  } catch(e) {
+    showError('Failed to load ceremony: ' + e.message);
+  }
+}
+
+function populatePodiumSlot(pos, data, position) {
+  if (!data) return;
+  const pts = calcPoints(position);
+  document.getElementById(`${pos}-handle`).textContent = data.handle;
+  document.getElementById(`${pos}-time`).textContent   = formatTime(data.total_time);
+  document.getElementById(`${pos}-correct`).textContent = data.correct ? data.correct + '/25 correct' : '';
+  document.getElementById(`${pos}-points`).textContent  = pts + ' pts';
+}
+
+function showFastestLap(fastest) {
+  if (!fastest) return;
+  document.getElementById('fl-handle').textContent = fastest.handle;
+  document.getElementById('fl-time').textContent   = formatTime(fastest.total_time) + ' · Fastest in race';
+}
+
+function renderLeaderboard(lb, race) {
+  const currentHandle = localStorage.getItem('apex_handle') || '';
+  const el = document.getElementById('lb-list');
+  el.innerHTML = lb.map((row, i) => {
+    const pos = i + 1;
+    const pts = calcPoints(pos);
+    const isYou = row.handle === currentHandle;
+    const gap = i === 0 ? 'Winner' : '+' + formatTime(row.total_time - lb[0].total_time);
+    return `<div class="lb-row${isYou ? ' you' : ''}">
+      <div class="lb-pos ${pos<=3?'p'+pos:''}">${pos}</div>
+      <div class="lb-handle">${row.handle}${isYou ? ' ◀' : ''}</div>
+      <div class="lb-time">${formatTime(row.total_time)}</div>
+      <div class="lb-pts">${pts}pts</div>
+      <div class="lb-gap">${gap}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── AWARD POINTS ──────────────────────────────────────────────────────────────
+async function awardPoints(lb, race) {
+  // Check if points already awarded for this race
+  const check = await fetch(
+    `${SUPABASE_URL}/rest/v1/apex_points?race_name=eq.${encodeURIComponent(race.race_name)}&limit=1`,
+    { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
+  );
+  const existing = await check.json();
+  if (existing.length > 0) return; // Already awarded
+
+  // Award points to all finishers
+  const fastestTime = lb[0].total_time;
+
+  for (let i = 0; i < lb.length; i++) {
+    const row = lb[i];
+    const position = i + 1;
+    const pts = calcPoints(position);
+    const isFastest = row.total_time === fastestTime;
+    const bonus = isFastest ? 5 : 0;
+
+    await fetch(`${SUPABASE_URL}/rest/v1/apex_points`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({
+        handle: row.handle,
+        race_name: race.race_name,
+        race_code: race.race_code,
+        season: race.season,
+        position,
+        points: pts,
+        fastest_lap: isFastest,
+        bonus_points: bonus,
+        total_points: pts + bonus,
+        race_time: row.total_time
+      })
+    });
+  }
+}
+
+// ── ISSUE PODIUM CARDS ────────────────────────────────────────────────────────
+async function issuePodiuCards(lb, race) {
+  const topThree = [
+    { data: lb[0], type: 'Winner',  serial: `APEX·WIN·${race.race_code}·S1·${new Date().getFullYear()}` },
+    { data: lb[1], type: 'Podium',  serial: `APEX·POD·${race.race_code}·P2·S1·${new Date().getFullYear()}` },
+    { data: lb[2], type: 'Podium',  serial: `APEX·POD·${race.race_code}·P3·S1·${new Date().getFullYear()}` },
+  ];
+
+  for (const entry of topThree) {
+    if (!entry.data) continue;
+    try {
+      // Check not already issued
+      const check = await fetch(
+        `${SUPABASE_URL}/rest/v1/apex_cards?handle=eq.${encodeURIComponent(entry.data.handle)}&card_type=eq.${encodeURIComponent(entry.type)}&race=eq.${encodeURIComponent(race.race_name)}`,
+        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
+      );
+      const existing = await check.json();
+      if (existing.length > 0) continue;
+
+      await fetch(`${SUPABASE_URL}/rest/v1/apex_cards`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Prefer: 'return=minimal'
+        },
+        body: JSON.stringify({
+          handle: entry.data.handle,
+          card_type: entry.type,
+          race: race.race_name,
+          season: race.season,
+          time: entry.data.total_time,
+          position: topThree.indexOf(entry) + 1,
+          correct: entry.data.correct,
+          serial: entry.serial
+        })
+      });
+    } catch(e) {}
+  }
+}
+
+// ── CONFETTI ──────────────────────────────────────────────────────────────────
+function launchConfetti() {
+  const colors = ['#f5c842','#e8132a','#22c55e','#3b82f6','#ffffff','#c9a84c'];
+  for (let i = 0; i < 120; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.animationDuration = (2 + Math.random() * 3) + 's';
+      piece.style.animationDelay = Math.random() * 0.5 + 's';
+      piece.style.width = piece.style.height = (6 + Math.random() * 10) + 'px';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 5000);
+    }, i * 30);
+  }
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────────────────
+function shareResults() {
+  const p1 = document.getElementById('p1-handle').textContent;
+  const p1t = document.getElementById('p1-time').textContent;
+  const p2 = document.getElementById('p2-handle').textContent;
+  const p3 = document.getElementById('p3-handle').textContent;
+  const text = `APEX · British Grand Prix 🏆\n\nP1 ${p1} · ${p1t}\nP2 ${p2}\nP3 ${p3}\n\nResults & Championship standings:\ncarcophony.github.io/apex\n#APEX #F1`;
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+}
+
+function showError(msg) {
+  document.getElementById('loading-screen').innerHTML = `
+    <div style="font-size:32px;">⚠️</div>
+    <div class="loading-title" style="color:#e8132a;">${msg}</div>
+    <div class="loading-sub">Check that the race has closed and results are in Supabase.</div>`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', runCeremony);
+</script>
+</body>
+</html>
