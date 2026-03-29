@@ -1308,25 +1308,40 @@ async function showRaceResults(time) {
   const myPos = lb.findIndex(r => r.handle === handle) + 1;
   const posLabel = myPos > 0 ? 'P' + myPos : 'P—';
 
+  const raceStillLive = RACE_CONFIG && getRaceStatus(RACE_CONFIG) === 'live';
+
   let resultLabel, headerBg;
-  if (myPos === 1)      { resultLabel = 'RACE WINNER!';   headerBg = '#c9a84c'; }
-  else if (myPos <= 3)  { resultLabel = 'PODIUM FINISH!'; headerBg = '#1a6e2e'; }
-  else if (myPos <= 10) { resultLabel = 'POINTS FINISH';  headerBg = '#185FA5'; }
-  else                  { resultLabel = 'RACE COMPLETE';  headerBg = '#555';    }
+  if (raceStillLive) {
+    // Race still open — provisional result only
+    resultLabel = 'TIME POSTED';
+    headerBg = '#185FA5';
+  } else {
+    // Race closed — full result
+    if (myPos === 1)      { resultLabel = 'RACE WINNER!';   headerBg = '#c9a84c'; }
+    else if (myPos <= 3)  { resultLabel = 'PODIUM FINISH!'; headerBg = '#1a6e2e'; }
+    else if (myPos <= 10) { resultLabel = 'POINTS FINISH';  headerBg = '#185FA5'; }
+    else                  { resultLabel = 'RACE COMPLETE';  headerBg = '#555';    }
+  }
 
   document.getElementById('res-title').textContent = resultLabel;
-  document.getElementById('res-sub').textContent = `British Grand Prix · ${handle}`;
+  document.getElementById('res-sub').textContent = raceStillLive
+    ? `British Grand Prix · Provisional · Race closes ${new Date(RACE_CONFIG.close_time).toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'})}`
+    : `British Grand Prix · ${handle}`;
   document.getElementById('res-header').style.background = headerBg;
   document.getElementById('res-time').textContent = formatTime(time);
-  document.getElementById('res-pos').textContent = posLabel;
+  document.getElementById('res-pos').textContent = raceStillLive ? posLabel + ' provisional' : posLabel;
   document.getElementById('res-correct').textContent = totalCorrect + '/' + (TOTAL_LAPS * QUESTIONS_PER_LAP);
   document.getElementById('pos-value').textContent = posLabel;
 
   // Share text
   const emojiStr = shareEmoji.join('');
-  const shareText = `APEX · British Grand Prix 🏁\n${handle} · ${posLabel}\n${formatTime(time)} · ${totalCorrect}/${TOTAL_LAPS*QUESTIONS_PER_LAP} correct\n${emojiStr}\ncarcophony.github.io/apex`;
+  const shareText = raceStillLive
+    ? `APEX · British Grand Prix 🏁\n${handle} · ${posLabel} provisional\n${formatTime(time)} · ${totalCorrect}/${TOTAL_LAPS*QUESTIONS_PER_LAP} correct\nRace still live — can you beat it?\n${emojiStr}\ncarcophony.github.io/apex`
+    : `APEX · British Grand Prix 🏁\n${handle} · ${posLabel}\n${formatTime(time)} · ${totalCorrect}/${TOTAL_LAPS*QUESTIONS_PER_LAP} correct\n${emojiStr}\ncarcophony.github.io/apex`;
   document.getElementById('sp-emoji').textContent = emojiStr;
-  document.getElementById('sp-text').textContent = `${posLabel} · ${formatTime(time)}\n${totalCorrect}/${TOTAL_LAPS*QUESTIONS_PER_LAP} correct`;
+  document.getElementById('sp-text').textContent = raceStillLive
+    ? `${posLabel} provisional · ${formatTime(time)}\nRace still live — results confirmed at close`
+    : `${posLabel} · ${formatTime(time)}\n${totalCorrect}/${TOTAL_LAPS*QUESTIONS_PER_LAP} correct`;
   document.getElementById('res-header').dataset.share = shareText;
 
   // Earned card display
