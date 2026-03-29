@@ -1021,13 +1021,25 @@ async function startRace() {
 
   // Gate: must have Qualifying card for this race
   try {
+    // Fetch all cards for this handle in one go
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/apex_cards?handle=eq.${encodeURIComponent(h)}&card_type=eq.Qualifying&race=eq.${encodeURIComponent('Qualifying · Silverstone')}`,
+      `${SUPABASE_URL}/rest/v1/apex_cards?handle=eq.${encodeURIComponent(h)}`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }}
     );
-    const cards = await res.json();
-    if (!cards.length) {
-      showToast('You need a Qualifying card for this race — go qualify first');
+    const allCards = await res.json();
+    const hasQualifying    = allCards.some(c => c.card_type === 'Qualifying');
+    const hasParticipation = allCards.some(c => c.card_type === 'Participation');
+
+    if (!hasQualifying) {
+      if (!hasParticipation) {
+        // Never played — send to Practice
+        showToast('Complete a Practice session first to unlock Qualifying');
+        setTimeout(() => { window.location.href = '/apex/index.html'; }, 2000);
+      } else {
+        // Practised but not qualified — send to Qualifying
+        showToast('You need to Qualify first — taking you there now');
+        setTimeout(() => { window.location.href = '/apex/apex-qualifying.html'; }, 2000);
+      }
       return;
     }
   } catch(e) { showToast('Connection error — try again'); return; }
