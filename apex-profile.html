@@ -975,7 +975,7 @@ function buildGarage(cards) {
   // Always show locked slots for cards not yet earned
   const hasWinner = cards.some(c => c.card_type === 'Winner');
   const hasPodium = cards.some(c => c.card_type === 'Podium');
-  const hasParticipation = cards.some(c => c.card_type === 'Participation');
+  // hasParticipation and hasQualifying already declared above
 
   const lockedSlots = [
     !hasParticipation && { label:'Participation', hint:'Complete a race' },
@@ -1069,15 +1069,15 @@ function goRace() {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────
-// Auto-load if handle already stored
-const savedHandle = localStorage.getItem('apex_handle');
-if (savedHandle) {
-  loadProfile(savedHandle);
-} else {
-  // Pre-fill input if there's something in storage
-  const inp = document.getElementById('handle-input-profile');
-  if (inp && savedHandle) inp.value = savedHandle;
-}
+document.addEventListener('DOMContentLoaded', () => {
+  const savedHandle = localStorage.getItem('apex_handle');
+  if (savedHandle) {
+    loadProfile(savedHandle);
+  } else {
+    const inp = document.getElementById('handle-input-profile');
+    if (inp) inp.focus();
+  }
+});
 </script>
 </body>
 </html>
