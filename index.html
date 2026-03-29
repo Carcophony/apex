@@ -356,8 +356,8 @@ html, body {
   <div id="header">
     <div id="logo">AP<span>EX</span></div>
     <div id="race-info">
-      <div id="race-name">British Grand Prix</div>
-      <div id="race-venue"><span id="venue-name">Silverstone</span> · <span id="lap-of">Lap 1 of 10</span></div>
+      <div id="race-name">Practice Session</div>
+      <div id="race-venue"><span id="venue-name">Silverstone</span> · <span id="lap-of">Lap 1 of 5</span></div>
     </div>
     <button onclick="window.location.href='/apex/apex-profile.html'" style="background:none;border:1px solid #2a2d34;border-radius:6px;color:#888;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px 10px;cursor:pointer;">Profile</button>
   </div>
@@ -428,11 +428,11 @@ html, body {
 <div class="screen show" id="handle-screen">
   <div class="screen-card">
     <div class="screen-header">
-      <div class="screen-title">APEX</div>
-      <div class="screen-sub">British Grand Prix · Silverstone</div>
+      <div class="screen-title">PRACTICE</div>
+      <div class="screen-sub">Silverstone · No limit on attempts</div>
     </div>
     <div class="screen-body">
-      <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.5;">Enter your X handle to race and appear on the leaderboard.</p>
+      <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.5;">Enter your X handle to practice and appear on the leaderboard.</p>
       <input class="screen-input" id="handle-input" type="text" placeholder="@yourhandle" maxlength="30" />
       <button class="screen-btn" onclick="startRace()">Start Engines</button>
       <button class="screen-btn dark" style="margin-top:8px;" onclick="goProfile()">My Profile →</button>
@@ -467,8 +467,8 @@ html, body {
 <div class="screen" id="results-screen">
   <div class="screen-card">
     <div class="screen-header" id="res-header">
-      <div class="screen-title" id="res-title">RACE WINNER</div>
-      <div class="screen-sub" id="res-sub">British Grand Prix</div>
+      <div class="screen-title" id="res-title">PRACTICE COMPLETE</div>
+      <div class="screen-sub" id="res-sub">Practice · Silverstone</div>
     </div>
     <div class="screen-body">
       <div class="stats-grid">
@@ -477,7 +477,7 @@ html, body {
         <div class="stat-box"><div class="stat-n" id="res-correct">0/50</div><div class="stat-l">Correct</div></div>
       </div>
       <div id="share-preview">
-        <div id="sp-title">APEX · British Grand Prix</div>
+        <div id="sp-title">APEX · Practice · Silverstone</div>
         <span id="sp-emoji"></span>
         <div id="sp-text"></div>
       </div>
@@ -499,16 +499,16 @@ html, body {
 const SUPABASE_URL = 'https://eluwjbndjlscixjytrzx.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_xOJRXt2dGCXovTNgDOSOJw_Shrbofuw';
 
-// ── RACE CONFIGURATION ────────────────────────────────────────────────────────
-// Edit these values to change race parameters
-const RACE_NAME        = 'British Grand Prix';  // Race name (shows on leaderboard)
-const RACE_VENUE       = 'Silverstone';          // Venue name (display only)
-const TOTAL_LAPS       = 10;                     // Number of laps per race
-const QUESTIONS_PER_LAP = 5;                     // Questions per lap
-const PENALTY_SECS     = 10;                     // Seconds added per wrong answer
-const ANSWER_PAUSE     = 2000;                   // Pause between questions (ms) — 2000 = 2 seconds
-const LAP_PAUSE        = true;                   // Show lap complete screen? false = auto-continue
-const LAP_PAUSE_SECS   = 0;                      // Auto-continue after N secs (0 = wait for tap)
+// ── PRACTICE CONFIGURATION ───────────────────────────────────────────────────
+const RACE_NAME        = 'Practice · Silverstone';  // Session name (shows on leaderboard)
+const RACE_VENUE       = 'Silverstone';              // Venue name (display only)
+const SESSION_TYPE     = 'Practice';                 // Practice / Qualifying / Race
+const TOTAL_LAPS       = 5;                          // 5 laps for Practice
+const QUESTIONS_PER_LAP = 5;                         // Questions per lap
+const PENALTY_SECS     = 10;                         // Seconds added per wrong answer
+const ANSWER_PAUSE     = 2000;                       // Pause between questions (ms)
+const LAP_PAUSE        = true;                       // Show lap complete screen
+const LAP_PAUSE_SECS   = 0;                          // 0 = wait for tap
 const BEST_TIME_ONLY   = true;                   // Leaderboard shows best time per handle only
 const POLE_CREDIT_SECS = 0;                      // Pole position time credit in seconds (0 = off)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1219,12 +1219,8 @@ async function showResults() {
   const pbDiff = previousBest ? (previousBest - totalTime).toFixed(1) : null;
 
   let resultLabel, headerBg;
-  if (isNewPB && myPos === 1) { resultLabel = 'RACE WINNER!'; headerBg = '#c9a84c'; }
-  else if (isNewPB) { resultLabel = 'NEW BEST TIME!'; headerBg = '#1a6e2e'; }
-  else if (myPos === 1) { resultLabel = 'RACE WINNER!'; headerBg = '#c9a84c'; }
-  else if (myPos <= 3) { resultLabel = 'PODIUM FINISH!'; headerBg = '#1a6e2e'; }
-  else if (myPos <= 10) { resultLabel = 'POINTS FINISH'; headerBg = '#185FA5'; }
-  else { resultLabel = 'CLASSIFIED'; headerBg = '#555'; }
+  if (isNewPB) { resultLabel = 'NEW BEST TIME!'; headerBg = '#1a6e2e'; }
+  else { resultLabel = 'PRACTICE COMPLETE'; headerBg = '#185FA5'; }
 
   document.getElementById('res-title').textContent = resultLabel;
   document.getElementById('res-sub').textContent = `${RACE_NAME} · ${handle}`;
