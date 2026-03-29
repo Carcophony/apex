@@ -642,13 +642,19 @@ body::before {
       <div class="signin-tagline">The F1 Knowledge Race</div>
     </div>
     <div class="signin-body">
-      <p class="signin-desc">Sign in with X to race, collect cards and appear on the leaderboard. Your handle is your driver name.</p>
-      <button class="signin-btn" onclick="signInWithX()">
-        <!-- X logo SVG -->
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        Sign in with X
+      <p class="signin-desc">Enter your X handle to view your profile, cards and race history.</p>
+      <input
+        id="handle-input-profile"
+        type="text"
+        placeholder="@yourhandle"
+        maxlength="30"
+        style="width:100%;padding:12px 14px;background:#1a1c21;border:1px solid #2a2d34;border-radius:8px;color:#fff;font-family:Impact,'Arial Narrow',Arial,sans-serif;font-size:20px;font-weight:700;letter-spacing:0.04em;margin-bottom:10px;outline:none;box-sizing:border-box;"
+        onkeydown="if(event.key==='Enter')signInWithHandle()"
+      />
+      <button class="signin-btn" onclick="signInWithHandle()" style="justify-content:center;">
+        View My Profile →
       </button>
-      <p class="signin-note">We only use your public handle. Nothing is posted without your action.</p>
+      <p class="signin-note">Your handle is your driver name. Nothing is posted without your action.</p>
     </div>
   </div>
 </div>
@@ -782,20 +788,17 @@ let currentHandle = null;
 // ── SIGN IN ─────────────────────────────────────────────────────────────
 // For now: demo sign-in with stored handle
 // X OAuth will replace this — same function, different internals
-function signInWithX() {
-  // Check if we have a stored handle
-  const stored = localStorage.getItem('apex_handle');
-  if (stored) {
-    loadProfile(stored);
-    return;
-  }
-  // Prompt for handle (temporary until X OAuth is wired)
-  const h = prompt('Enter your X handle to continue (@ included):');
-  if (!h) return;
-  const handle = h.startsWith('@') ? h : '@' + h;
-  localStorage.setItem('apex_handle', handle);
-  loadProfile(handle);
+function signInWithHandle() {
+  const input = document.getElementById('handle-input-profile');
+  let h = input ? input.value.trim() : '';
+  if (!h) { return; }
+  if (!h.startsWith('@')) h = '@' + h;
+  localStorage.setItem('apex_handle', h);
+  loadProfile(h);
 }
+
+// Keep signInWithX as alias for backwards compatibility
+function signInWithX() { signInWithHandle(); }
 
 // ── LOAD PROFILE ─────────────────────────────────────────────────────────
 async function loadProfile(handle) {
@@ -1070,6 +1073,10 @@ function goRace() {
 const savedHandle = localStorage.getItem('apex_handle');
 if (savedHandle) {
   loadProfile(savedHandle);
+} else {
+  // Pre-fill input if there's something in storage
+  const inp = document.getElementById('handle-input-profile');
+  if (inp && savedHandle) inp.value = savedHandle;
 }
 </script>
 </body>
