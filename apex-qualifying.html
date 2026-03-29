@@ -435,7 +435,7 @@ html, body {
     <div class="screen-body">
       <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px;margin-bottom:12px;">
         <p style="font-size:12px;color:#f59e0b;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Your Qualifying Time Sets Your Grid</p>
-        <p style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6;">One lap. Five questions. Everyone qualifies — but your time determines your advantage in the Race. Beat the par time of <strong style="color:#fff;">3:30.0</strong> and you start ahead of the field. Miss it and you carry that deficit in.</p>
+        <p style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6;">One lap. Five questions. Everyone qualifies — but your time determines your grid position in the Race. Beat the par time of <strong style="color:#fff;">3:30.0</strong> and you start ahead of the field. Miss it and you carry that deficit in.</p>
       </div>
       <p style="font-size:13px;color:#888;margin-bottom:12px;line-height:1.5;">Enter your X handle to begin. You need a Participation card to qualify.</p>
       <input class="screen-input" id="handle-input" type="text" placeholder="@yourhandle" maxlength="30" />
@@ -510,7 +510,7 @@ const RACE_NAME          = 'Qualifying · Silverstone';
 const RACE_VENUE         = 'Silverstone';
 const RACE_CODE          = 'BGP'; // Used in card serial — change per race
 const SESSION_TYPE       = 'Qualifying';
-// duplicate removed
+const TOTAL_LAPS         = 1;           // One flying lap — that's your qualifying time
 const QUESTIONS_PER_LAP  = 5;
 const PENALTY_SECS       = 10;
 const ANSWER_PAUSE       = 2000;
