@@ -660,7 +660,7 @@ body::before {
     <div class="logo">AP<em>EX</em></div>
     <div class="header-right">
       <div class="handle-pill" id="header-handle">@only9built</div>
-      <button class="race-btn" onclick="goRace()">Practice →</button>
+      <button class="race-btn" id="header-race-btn" onclick="goRace()">Practice →</button>
     </div>
   </header>
 
@@ -742,12 +742,12 @@ body::before {
       <!-- NEXT RACE -->
       <div class="next-race">
         <div class="next-race-header">
-          <span class="next-race-label">Current Session</span>
-          <span style="font-size:9px;color:rgba(255,255,255,0.5);font-weight:700;letter-spacing:0.1em;">Practice</span>
+          <span class="next-race-label" id="session-label">Current Session</span>
+          <span style="font-size:9px;color:rgba(255,255,255,0.5);font-weight:700;letter-spacing:0.1em;" id="session-type">Practice</span>
         </div>
         <div class="next-race-body">
-          <div class="next-race-name">Silverstone</div>
-          <div class="next-race-venue">Practice · No limit on attempts</div>
+          <div class="next-race-name" id="session-name">Silverstone</div>
+          <div class="next-race-venue" id="session-venue">Practice · No limit on attempts</div>
           <button class="next-race-btn" id="race-access-btn" onclick="goRace()">Start Practice →</button>
         </div>
       </div>
@@ -919,6 +919,39 @@ function renderStandings(sorted) {
 // ── CARD GARAGE — driven by apex_cards table ───────────────────────────
 function buildGarage(cards) {
   const grid = document.getElementById('garage-grid');
+
+  // ── SESSION PANEL — shows what to do next based on cards held ──
+  const hasParticipation = cards.some(c => c.card_type === 'Participation');
+  const hasQualifying    = cards.some(c => c.card_type === 'Qualifying');
+
+  const sessionType  = document.getElementById('session-type');
+  const sessionName  = document.getElementById('session-name');
+  const sessionVenue = document.getElementById('session-venue');
+  const sessionBtn   = document.getElementById('race-access-btn');
+  const headerBtn    = document.getElementById('header-race-btn');
+
+  if (hasQualifying) {
+    // Qualified — next step is the Race
+    if (sessionType)  sessionType.textContent  = 'Race';
+    if (sessionName)  sessionName.textContent  = 'British Grand Prix';
+    if (sessionVenue) sessionVenue.textContent = 'Silverstone · You are on the grid';
+    if (sessionBtn) { sessionBtn.textContent = 'Go to Race →'; sessionBtn.onclick = () => window.location.href = '/apex/apex-race.html'; }
+    if (headerBtn) { headerBtn.textContent = 'Race →'; headerBtn.onclick = () => window.location.href = '/apex/apex-race.html'; }
+  } else if (hasParticipation) {
+    // Practised — next step is Qualifying
+    if (sessionType)  sessionType.textContent  = 'Qualifying';
+    if (sessionName)  sessionName.textContent  = 'Qualifying · Silverstone';
+    if (sessionVenue) sessionVenue.textContent = 'One lap · Sets your grid position';
+    if (sessionBtn) { sessionBtn.textContent = 'Go to Qualifying →'; sessionBtn.onclick = () => window.location.href = '/apex/apex-qualifying.html'; }
+    if (headerBtn) { headerBtn.textContent = 'Qualifying →'; headerBtn.onclick = () => window.location.href = '/apex/apex-qualifying.html'; }
+  } else {
+    // No cards yet — start with Practice
+    if (sessionType)  sessionType.textContent  = 'Practice';
+    if (sessionName)  sessionName.textContent  = 'Silverstone';
+    if (sessionVenue) sessionVenue.textContent = 'Practice · No limit on attempts';
+    if (sessionBtn) { sessionBtn.textContent = 'Start Practice →'; sessionBtn.onclick = () => window.location.href = '/apex/index.html'; }
+    if (headerBtn) { headerBtn.textContent = 'Practice →'; headerBtn.onclick = () => window.location.href = '/apex/index.html'; }
+  }
 
   const icons    = { Winner:'🏆', Podium:'🥈', Participation:'🏁' };
   const colors   = { Winner:'#c9a84c', Podium:'#888', Participation:'#e8132a' };
