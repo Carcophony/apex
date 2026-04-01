@@ -345,6 +345,50 @@ html, body {
   transition: opacity 0.1s;
 }
 #penalty-flash.show { opacity: 1; }
+/* ── LIGHTS OUT ── */
+#lights-screen {
+  position: fixed; inset: 0;
+  background: #000;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+#lights-screen.show {
+  opacity: 1;
+  pointer-events: all;
+}
+.lights-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+.light {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: #1a0000;
+  border: 2px solid #3a0000;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.light.on {
+  background: #e8132a;
+  border-color: #ff3d55;
+  box-shadow: 0 0 20px rgba(232,19,42,0.8), 0 0 40px rgba(232,19,42,0.4);
+}
+.lights-text {
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(245,200,66,0.6);
+}
 </style>
 </head>
 <body>
@@ -493,6 +537,18 @@ html, body {
   </div>
 </div>
 
+<div id="lights-screen">
+  <div class="lights-text">Get ready</div>
+  <div class="lights-row">
+    <div class="light" id="l1"></div>
+    <div class="light" id="l2"></div>
+    <div class="light" id="l3"></div>
+    <div class="light" id="l4"></div>
+    <div class="light" id="l5"></div>
+  </div>
+  <div class="lights-text" id="lights-sub"></div>
+</div>
+
 <div id="penalty-flash">+10s</div>
 <div id="toast"></div>
 
@@ -557,7 +613,7 @@ const DRIVER_DECK = [
   { name:'HH Frentzen', flag:'🇩🇪', team:'Williams / Jordan / Sauber', helmet:{base:'#888',stripe:'#fff',visor:'#222'},
     stats:{ wins:3, poles:2, titles:0, seasons:11, podiums:18, networth:8, fastlaps:6, dnfs:46, points:174, debut:1994, salary:8, lapsled:312, km:51200, tyres:3 }},
   { name:'Lando Norris', flag:'🇬🇧', team:'McLaren', helmet:{base:'#FF8000',stripe:'#fff',visor:'#111'},
-    stats:{ wins:5, poles:10, titles:0, seasons:6, podiums:34, networth:23, fastlaps:8, dnfs:18, points:1026, debut:2019, salary:120, lapsled:692, km:32100, tyres:2 }},
+    stats:{ wins:5, poles:10, titles:0, seasons:6, podiums:34, networth:23, fastlaps:8, dnfs:18, points:1026, debut:2019, salary:120, lapsled:692, km:28400, tyres:2 }},
   { name:'Jackie Stewart', flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', team:'Tyrrell / Matra', helmet:{base:'#012169',stripe:'#ffdf00',visor:'#333'},
     stats:{ wins:27, poles:17, titles:3, seasons:9, podiums:43, networth:60, fastlaps:15, dnfs:30, points:360, debut:1965, salary:2, lapsled:1462, km:28700, tyres:3 }},
   { name:'Emerson Fittipaldi', flag:'🇧🇷', team:'Lotus / McLaren', helmet:{base:'#009c3b',stripe:'#ffdf00',visor:'#222'},
@@ -575,7 +631,7 @@ const DRIVER_DECK = [
   { name:'Romain Grosjean', flag:'🇨🇭', team:'Haas / Lotus / Renault', helmet:{base:'#E8002D',stripe:'#fff',visor:'#111'},
     stats:{ wins:0, poles:0, titles:0, seasons:9, podiums:10, networth:8, fastlaps:1, dnfs:45, points:391, debut:2009, salary:5, lapsled:122, km:47100, tyres:3 }},
   { name:'Ralf Schumacher', flag:'🇩🇪', team:'Williams / Toyota', helmet:{base:'#005EB8',stripe:'#fff',visor:'#111'},
-    stats:{ wins:6, poles:6, titles:0, seasons:11, podiums:27, networth:40, fastlaps:8, dnfs:43, points:329, debut:1997, salary:22, lapsled:512, km:55400, tyres:3 }},
+    stats:{ wins:6, poles:6, titles:0, seasons:11, podiums:27, networth:18, fastlaps:8, dnfs:43, points:329, debut:1997, salary:22, lapsled:512, km:55400, tyres:3 }},
   { name:'Nelson Piquet', flag:'🇧🇷', team:'Brabham / Williams / Lotus', helmet:{base:'#009c3b',stripe:'#ffdf00',visor:'#222'},
     stats:{ wins:23, poles:24, titles:3, seasons:17, podiums:60, networth:50, fastlaps:23, dnfs:67, points:485, debut:1978, salary:10, lapsled:1742, km:74100, tyres:5 }},
   { name:'Gilles Villeneuve', flag:'🇨🇦', team:'Ferrari', helmet:{base:'#e8132a',stripe:'#fff',visor:'#111'},
@@ -934,7 +990,51 @@ function startRace() {
   questions = getDayQuestions();
   currentLap = 1; currentQ = 0; totalCorrect = 0; totalTime = 0;
   lapTimes = []; shareEmoji = []; gameComplete = false;
-  startLap();
+
+  // Lights out — first time only
+  const hasRacedBefore = localStorage.getItem('apex_raced');
+  if (!hasRacedBefore) {
+    localStorage.setItem('apex_raced', '1');
+    showLightsOut(() => startLap());
+  } else {
+    startLap();
+  }
+}
+
+// ── LIGHTS OUT SEQUENCE ───────────────────────────────────────────────────────
+function showLightsOut(callback) {
+  const screen = document.getElementById('lights-screen');
+  const lights = [1,2,3,4,5].map(i => document.getElementById('l' + i));
+  const sub = document.getElementById('lights-sub');
+
+  screen.classList.add('show');
+  sub.textContent = '';
+
+  // Light up one by one
+  let i = 0;
+  const lightUp = setInterval(() => {
+    if (i < 5) {
+      lights[i].classList.add('on');
+      i++;
+    } else {
+      clearInterval(lightUp);
+      // Brief pause at all lights on
+      setTimeout(() => {
+        // All lights out
+        lights.forEach(l => l.classList.remove('on'));
+        sub.textContent = 'GO!';
+        sub.style.color = '#f5c842';
+        sub.style.fontSize = '28px';
+        // Start race after GO! flash
+        setTimeout(() => {
+          screen.classList.remove('show');
+          sub.style.fontSize = '13px';
+          sub.style.color = 'rgba(245,200,66,0.6)';
+          callback();
+        }, 600);
+      }, 800);
+    }
+  }, 700);
 }
 
 function startLap() {
