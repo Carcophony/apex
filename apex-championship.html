@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX — Championship Standings</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080909;
+  --bg2: #0e0f11;
+  --bg3: #13151a;
+  --bg4: #1a1c21;
+  --border: #222529;
+  --gold: #f5c842;
+  --gold2: #c9a84c;
+  --gold3: #8a6d1e;
+  --red: #e8132a;
+  --green: #22c55e;
+  --silver: #aaaaaa;
+  --bronze: #cd7f32;
+  --white: #ffffff;
+  --ink: rgba(255,255,255,0.5);
+  --ink2: rgba(255,255,255,0.22);
+}
+
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--white);
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    repeating-linear-gradient(45deg,  rgba(255,255,255,0.012) 0, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 10px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.012) 0, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 10px);
+  pointer-events: none;
+}
+
+/* ── HEADER ── */
+.site-header {
+  position: relative; z-index: 10;
+  background: var(--bg2);
+  border-bottom: 3px solid var(--red);
+  padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px;
+}
+.logo { font-size: 24px; font-weight: 900; letter-spacing: 0.15em; color: var(--white); }
+.logo em { color: var(--red); font-style: normal; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.season-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--gold2);
+}
+.profile-btn {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--ink); border-radius: 6px; padding: 6px 12px;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+}
+.profile-btn:hover { border-color: var(--gold3); color: var(--gold2); }
+
+/* ── GRANDSTAND ── */
+.grandstand {
+  height: 28px; background: var(--bg2);
+  display: flex; align-items: flex-end; padding: 0 4px 3px; gap: 2px; overflow: hidden;
+}
+.gs-block { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.gs-row { display: flex; gap: 1px; height: 5px; }
+.gs-seat { flex: 1; border-radius: 1px; }
+
+/* ── HERO ── */
+.hero {
+  position: relative; z-index: 5;
+  padding: 36px 24px 28px;
+  text-align: center;
+  background: linear-gradient(160deg, #121416 0%, #080909 100%);
+  border-bottom: 1px solid var(--border);
+}
+.hero-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--gold2); margin-bottom: 8px; display: block;
+}
+.hero-title {
+  font-size: 44px; font-weight: 900; letter-spacing: 0.06em;
+  color: var(--white); line-height: 1;
+}
+.hero-title em { color: var(--red); font-style: normal; }
+.hero-sub {
+  font-size: 12px; color: var(--ink); letter-spacing: 0.12em;
+  text-transform: uppercase; margin-top: 8px;
+}
+.gold-rule {
+  width: 160px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold2), transparent);
+  margin: 20px auto 0;
+}
+
+/* ── MAIN ── */
+.main {
+  max-width: 900px; margin: 0 auto;
+  padding: 28px 24px 60px;
+  position: relative; z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 24px;
+}
+@media (max-width: 680px) {
+  .main { grid-template-columns: 1fr; }
+}
+
+/* ── SECTION HEADS ── */
+.section-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--gold);
+  white-space: nowrap;
+}
+.section-rule { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(245,200,66,0.2), transparent); }
+
+/* ── CHAMPIONSHIP TABLE ── */
+.champ-table { width: 100%; }
+
+.champ-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 8px;
+  margin-bottom: 4px;
+  background: var(--bg2);
+  border: 1px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+  cursor: default;
+}
+.champ-row:hover { background: var(--bg3); }
+.champ-row.you { border-color: var(--gold2); background: rgba(245,200,66,0.04); }
+.champ-row.p1 { border-color: rgba(245,200,66,0.3); background: rgba(245,200,66,0.04); }
+.champ-row.p2 { border-color: rgba(170,170,170,0.2); }
+.champ-row.p3 { border-color: rgba(205,127,50,0.2); }
+
+.champ-pos {
+  font-size: 18px; font-weight: 900; width: 28px; text-align: center;
+  color: var(--ink2); flex-shrink: 0;
+}
+.champ-pos.gold   { color: var(--gold); }
+.champ-pos.silver { color: var(--silver); }
+.champ-pos.bronze { color: var(--bronze); }
+
+.champ-handle {
+  flex: 1; font-size: 15px; font-weight: 900;
+  color: var(--white); letter-spacing: 0.03em;
+}
+.champ-handle .you-tag {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.12em;
+  color: var(--gold2); margin-left: 6px; vertical-align: middle;
+}
+
+.champ-stats {
+  display: flex; gap: 16px; align-items: center; flex-shrink: 0;
+}
+.champ-stat { text-align: center; }
+.champ-stat-n {
+  font-size: 13px; font-weight: 900; color: var(--white); line-height: 1;
+}
+.champ-stat-l {
+  font-size: 7px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink2); margin-top: 2px;
+}
+
+.champ-pts {
+  font-size: 22px; font-weight: 900; color: var(--gold);
+  min-width: 52px; text-align: right; flex-shrink: 0;
+}
+.champ-pts-label {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink2);
+}
+
+.champ-gap {
+  font-size: 11px; color: var(--ink2); min-width: 52px;
+  text-align: right; flex-shrink: 0; font-family: Arial, sans-serif;
+}
+
+/* ── SIDEBAR ── */
+.sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+/* Race log */
+.race-log {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+}
+.race-log-header {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.race-log-title {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--gold);
+}
+.race-log-row {
+  padding: 10px 14px; border-bottom: 1px solid rgba(34,37,41,0.5);
+  display: flex; align-items: center; gap: 10px;
+}
+.race-log-row:last-child { border-bottom: none; }
+.race-log-code {
+  font-size: 11px; font-weight: 900; color: var(--red);
+  letter-spacing: 0.08em; width: 36px; flex-shrink: 0;
+}
+.race-log-name { flex: 1; font-size: 12px; font-weight: 700; color: var(--white); letter-spacing: 0.04em; }
+.race-log-status {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 3px 8px; border-radius: 10px;
+}
+.race-log-status.done     { background: rgba(34,197,94,0.12); color: var(--green); }
+.race-log-status.live     { background: rgba(232,19,42,0.12); color: var(--red); }
+.race-log-status.upcoming { background: rgba(255,255,255,0.05); color: var(--ink2); }
+
+/* Points key */
+.points-key {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+}
+.points-key-header {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+}
+.points-key-title {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--gold);
+}
+.points-key-body { padding: 12px 14px; }
+.points-key-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 11px;
+}
+.points-key-row:last-child { border-bottom: none; }
+.points-key-pos { color: var(--ink); font-family: Arial, sans-serif; }
+.points-key-pts { color: var(--gold2); font-weight: 900; }
+.points-note {
+  font-size: 10px; color: var(--ink2); margin-top: 10px;
+  font-family: Arial, sans-serif; line-height: 1.5;
+}
+
+/* ── AUTO REFRESH ── */
+.refresh-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg2); border-top: 1px solid var(--border);
+  padding: 8px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 50; font-size: 10px;
+}
+.refresh-label { color: var(--ink2); letter-spacing: 0.08em; font-family: Arial, sans-serif; }
+.refresh-countdown { color: var(--gold2); font-weight: 900; letter-spacing: 0.06em; }
+.share-btn {
+  background: var(--red); color: white; border: none; border-radius: 6px;
+  padding: 6px 14px; cursor: pointer;
+  font-family: Impact, 'Arial Narrow', Arial, sans-serif;
+  font-size: 11px; font-weight: 900; letter-spacing: 0.08em;
+  text-transform: uppercase; transition: background 0.15s;
+}
+.share-btn:hover { background: #ff1f38; }
+
+/* ── EMPTY / LOADING ── */
+.empty-state {
+  text-align: center; padding: 48px 24px; color: var(--ink2);
+  font-family: Arial, sans-serif; font-size: 13px; line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">AP<em>EX</em></div>
+  <div class="header-right">
+    <div class="season-badge" id="season-badge">2026 · Season 1</div>
+    <button class="profile-btn" onclick="window.location.href='/apex/apex-profile.html'">My Profile →</button>
+  </div>
+</header>
+
+<div class="grandstand" id="grandstand"></div>
+
+<div class="hero">
+  <span class="hero-label">Drivers Championship</span>
+  <div class="hero-title">SEASON <em>STANDINGS</em></div>
+  <div class="hero-sub" id="hero-sub">2026 · Season 1 · Updated live</div>
+  <div class="gold-rule"></div>
+</div>
+
+<div class="main">
+
+  <!-- LEFT — CHAMPIONSHIP TABLE -->
+  <div>
+    <div class="section-head">
+      <div class="section-title">Championship Table</div>
+      <div class="section-rule"></div>
+    </div>
+    <div class="champ-table" id="champ-table">
+      <div class="empty-state">Loading championship standings...</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- RACE LOG -->
+    <div class="race-log">
+      <div class="race-log-header">
+        <span class="race-log-title">Race Calendar</span>
+        <span style="font-size:9px;color:var(--ink2);font-weight:700;letter-spacing:0.08em;" id="rounds-label"></span>
+      </div>
+      <div id="race-log-list">
+        <div style="padding:16px;text-align:center;color:var(--ink2);font-family:Arial,sans-serif;font-size:12px;">Loading...</div>
+      </div>
+    </div>
+
+    <!-- POINTS KEY -->
+    <div class="points-key">
+      <div class="points-key-header">
+        <div class="points-key-title">Points System</div>
+      </div>
+      <div class="points-key-body">
+        <div class="points-key-row"><span class="points-key-pos">P1</span><span class="points-key-pts">100 pts</span></div>
+        <div class="points-key-row"><span class="points-key-pos">P2</span><span class="points-key-pts">85 pts</span></div>
+        <div class="points-key-row"><span class="points-key-pos">P3</span><span class="points-key-pts">72 pts</span></div>
+        <div class="points-key-row"><span class="points-key-pos">P4</span><span class="points-key-pts">61 pts</span></div>
+        <div class="points-key-row"><span class="points-key-pos">P5</span><span class="points-key-pts">52 pts</span></div>
+        <div class="points-key-row"><span class="points-key-pos">P6–P10</span><span class="points-key-pts">44→22 pts</span></div>
+        <div class="points-key-row"><span class="points-key-pos">P11–P20</span><span class="points-key-pts">18→10 pts</span></div>
+        <div class="points-key-row"><span class="points-key-pos">P21–P100</span><span class="points-key-pts">9→2 pts</span></div>
+        <div class="points-key-row"><span class="points-key-pos">P101+</span><span class="points-key-pts">1 pt</span></div>
+        <div class="points-key-row"><span class="points-key-pos">⚡ Fastest Lap</span><span class="points-key-pts">+5 pts</span></div>
+        <p class="points-note">Best 10 results count from 12 races. Worst 2 dropped.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- AUTO REFRESH BAR -->
+<div class="refresh-bar">
+  <span class="refresh-label">Standings update every 60 seconds</span>
+  <span class="refresh-countdown" id="refresh-countdown">Refreshing in 60s</span>
+  <button class="share-btn" onclick="shareStandings()">Share to X</button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://eluwjbndjlscixjytrzx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_xOJRXt2dGCXovTNgDOSOJw_Shrbofuw';
+const SEASON = '2026 · S1';
+
+let refreshTimer = 60;
+let currentHandle = localStorage.getItem('apex_handle') || '';
+
+// ── LOAD EVERYTHING ───────────────────────────────────────────────────────────
+async function loadAll() {
+  await Promise.all([loadStandings(), loadRaceCalendar()]);
+}
+
+// ── CHAMPIONSHIP STANDINGS ────────────────────────────────────────────────────
+async function loadStandings() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_points?season=eq.${encodeURIComponent(SEASON)}&order=total_points.desc`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
+    );
+    const rows = await res.json();
+
+    if (!rows.length) {
+      document.getElementById('champ-table').innerHTML =
+        '<div class="empty-state">No championship points awarded yet.<br>Complete a race to appear on the standings.</div>';
+      return;
+    }
+
+    // Aggregate points per handle — sum all races, apply drop rule (best 10 of 12)
+    const playerMap = {};
+    rows.forEach(r => {
+      if (!playerMap[r.handle]) {
+        playerMap[r.handle] = {
+          handle: r.handle,
+          races: [],
+          fastestLaps: 0,
+          wins: 0,
+          podiums: 0
+        };
+      }
+      playerMap[r.handle].races.push({
+        points: r.total_points,
+        position: r.position,
+        fastest: r.fastest_lap,
+        race: r.race_name
+      });
+      if (r.fastest_lap) playerMap[r.handle].fastestLaps++;
+      if (r.position === 1) playerMap[r.handle].wins++;
+      if (r.position <= 3) playerMap[r.handle].podiums++;
+    });
+
+    // Apply drop rule — sort race scores descending, take best 10
+    const standings = Object.values(playerMap).map(p => {
+      const sorted = [...p.races].sort((a,b) => b.points - a.points);
+      const counted = sorted.slice(0, 10);
+      const dropped = sorted.slice(10);
+      const totalPts = counted.reduce((sum, r) => sum + r.points, 0);
+      return { ...p, totalPts, raceCount: p.races.length, dropped: dropped.length };
+    }).sort((a,b) => b.totalPts - a.totalPts || b.wins - a.wins || b.podiums - a.podiums);
+
+    renderStandings(standings);
+  } catch(e) {
+    document.getElementById('champ-table').innerHTML =
+      '<div class="empty-state">Failed to load standings. Pull to refresh.</div>';
+  }
+}
+
+function renderStandings(standings) {
+  const leader = standings[0];
+  const el = document.getElementById('champ-table');
+
+  el.innerHTML = standings.map((p, i) => {
+    const pos = i + 1;
+    const isYou = p.handle === currentHandle;
+    const gap = pos === 1 ? 'Leader' : '-' + (leader.totalPts - p.totalPts) + ' pts';
+    const posClass = pos === 1 ? 'gold' : pos === 2 ? 'silver' : pos === 3 ? 'bronze' : '';
+    const rowClass = pos === 1 ? 'p1' : pos === 2 ? 'p2' : pos === 3 ? 'p3' : '';
+
+    return `<div class="champ-row ${rowClass} ${isYou ? 'you' : ''}">
+      <div class="champ-pos ${posClass}">${pos}</div>
+      <div class="champ-handle">
+        ${p.handle}
+        ${isYou ? '<span class="you-tag">YOU</span>' : ''}
+      </div>
+      <div class="champ-stats">
+        <div class="champ-stat">
+          <div class="champ-stat-n">${p.wins}</div>
+          <div class="champ-stat-l">Wins</div>
+        </div>
+        <div class="champ-stat">
+          <div class="champ-stat-n">${p.podiums}</div>
+          <div class="champ-stat-l">Pods</div>
+        </div>
+        <div class="champ-stat">
+          <div class="champ-stat-n">${p.fastestLaps}</div>
+          <div class="champ-stat-l">⚡</div>
+        </div>
+        <div class="champ-stat">
+          <div class="champ-stat-n">${p.raceCount}</div>
+          <div class="champ-stat-l">Races</div>
+        </div>
+      </div>
+      <div>
+        <div class="champ-pts">${p.totalPts}</div>
+        <div class="champ-pts-label">PTS</div>
+      </div>
+      <div class="champ-gap">${gap}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── RACE CALENDAR ─────────────────────────────────────────────────────────────
+async function loadRaceCalendar() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/apex_races?season=eq.${encodeURIComponent(SEASON)}&order=open_time.asc`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }}
+    );
+    const races = await res.json();
+    renderCalendar(races);
+  } catch(e) {}
+}
+
+function renderCalendar(races) {
+  const el = document.getElementById('race-log-list');
+  document.getElementById('rounds-label').textContent = races.length + ' Rounds';
+
+  if (!races.length) {
+    el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--ink2);font-family:Arial,sans-serif;font-size:12px;">No races scheduled yet.</div>';
+    return;
+  }
+
+  const now = new Date();
+  el.innerHTML = races.map((r, i) => {
+    const close = new Date(r.close_time);
+    const open  = new Date(r.open_time);
+    let status, statusClass;
+    if (now > close) { status = 'Done'; statusClass = 'done'; }
+    else if (now >= open) { status = 'LIVE'; statusClass = 'live'; }
+    else { status = 'Upcoming'; statusClass = 'upcoming'; }
+
+    return `<div class="race-log-row">
+      <div class="race-log-code">${r.race_code}</div>
+      <div class="race-log-name">${r.race_name}</div>
+      <div class="race-log-status ${statusClass}">${status}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── GRANDSTAND ────────────────────────────────────────────────────────────────
+function buildGrandstand() {
+  const gs = document.getElementById('grandstand');
+  const cols = ['#e8132a','#f5c842','#3b82f6','#22c55e','#e8132a','#888','#f5c842','#3b82f6','#22c55e','#e8132a','#f5c842','#3b82f6'];
+  for (let i = 0; i < 12; i++) {
+    const block = document.createElement('div'); block.className = 'gs-block';
+    for (let r = 0; r < 2; r++) {
+      const row = document.createElement('div'); row.className = 'gs-row';
+      for (let s = 0; s < 4; s++) {
+        const seat = document.createElement('div'); seat.className = 'gs-seat';
+        seat.style.background = Math.random() > 0.12 ? cols[i] : '#1e2128';
+        seat.style.opacity = (0.5 + Math.random() * 0.5).toFixed(2);
+        row.appendChild(seat);
+      }
+      block.appendChild(row);
+    }
+    gs.appendChild(block);
+  }
+}
+
+// ── AUTO REFRESH ──────────────────────────────────────────────────────────────
+function startRefreshTimer() {
+  refreshTimer = 60;
+  const el = document.getElementById('refresh-countdown');
+  const interval = setInterval(() => {
+    refreshTimer--;
+    el.textContent = `Refreshing in ${refreshTimer}s`;
+    if (refreshTimer <= 0) {
+      clearInterval(interval);
+      el.textContent = 'Refreshing...';
+      loadStandings().then(() => startRefreshTimer());
+    }
+  }, 1000);
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────────────────
+function shareStandings() {
+  const rows = document.querySelectorAll('.champ-row');
+  let text = 'APEX · Championship Standings · 2026 S1\n\n';
+  rows.forEach((row, i) => {
+    if (i >= 5) return;
+    const handle = row.querySelector('.champ-handle').textContent.trim().replace('YOU','').trim();
+    const pts = row.querySelector('.champ-pts').textContent.trim();
+    text += `P${i+1} ${handle} · ${pts}pts\n`;
+  });
+  text += '\ncarcophony.github.io/apex/apex-championship.html';
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  buildGrandstand();
+  loadAll();
+  startRefreshTimer();
+});
+</script>
+</body>
+</html>
